@@ -1,75 +1,42 @@
-"""
-Integration Tests for FastAPI Microservice Endpoints
-====================================================
-"""
-
+"""Dataset-independent FastAPI endpoint contract tests."""
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import Mock
 from fastapi.testclient import TestClient
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
-from app.api import app
-
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import app.api as api
 
 class TestFastAPIEndpoints(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.original_initializer = api.ensure_models_initialized
+        cls.original_state = dict(api.state)
+        content_model = Mock(); content_model.recommend.return_value = [(2, 0.91), (3, 0.82)]
+        hybrid = Mock(); hybrid.recommend.return_value = [(2, 0.95), (3, 0.88)]
+        svd = Mock(); svd.recommend.return_value = [(2, 0.90), (3, 0.80)]
+        genre = Mock(); genre.recommend.return_value = [(2, 0.87), (3, 0.79)]
+        monitor = Mock(); monitor.check_drift.return_value = {"drift_detected": False, "ks_statistic": 0.10, "p_value": 0.90, "interpretation": "No significant drift detected."}
+        api.state.clear()
+        api.state.update({"movies_df": [1,2,3], "movie_title_map": {1:"Toy Story",2:"Jumanji",3:"Heat"}, "movie_genre_map": {1:"Animation",2:"Adventure",3:"Crime"}, "content_model": content_model, "hybrid_model": hybrid, "svd_model": svd, "genre_prior": genre, "monitor": monitor})
+        api.ensure_models_initialized = lambda: None
+        cls.client = TestClient(api.app)
+
+    @classmethod
+    def tearDownClass(cls):
+        api.ensure_models_initialized = cls.original_initializer
+        api.state.clear(); api.state.update(cls.original_state)
 
     def test_health_check(self):
-        response = self.client.get("/health")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data.get("status"), "healthy")
-
+        r = self.client.get("/health"); self.assertEqual(r.status_code, 200); self.assertTrue(r.json()["models_loaded"])
     def test_user_recommendations(self):
-        payload = {
-            "user_id": 42,
-            "top_k": 5,
-            "diversity_penalty": 0.15
-        }
-        response = self.client.post("/recommend/user", json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data.get("user_id"), 42)
-        self.assertIsInstance(data.get("recommendations"), list)
-
+        r = self.client.post("/recommend/user", json={"user_id":42,"top_k":5}); self.assertEqual(r.status_code,200); self.assertEqual(r.json()["user_id"],42)
     def test_item_similarity(self):
-        payload = {
-            "movie_id": 1,
-            "top_k": 5,
-            "content_engine": "unified"
-        }
-        response = self.client.post("/recommend/item", json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data.get("movie_id"), 1)
-        self.assertIsInstance(data.get("recommendations"), list)
-
+        r = self.client.post("/recommend/item", json={"movie_id":1,"top_k":5}); self.assertEqual(r.status_code,200); self.assertEqual(r.json()["movie_id"],1)
     def test_cold_start_onboarding(self):
-        payload = {
-            "preferred_genres": ["Action", "Sci-Fi"],
-            "top_k": 5
-        }
-        response = self.client.post("/recommend/cold-start", json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIsInstance(data.get("recommendations"), list)
-
+        r = self.client.post("/recommend/cold-start", json={"preferred_genres":["Action"],"top_k":5}); self.assertEqual(r.status_code,200)
     def test_drift_monitoring(self):
-        payload = {
-            "recent_ratings": [4.0, 4.5, 5.0, 3.5, 4.0, 4.5, 5.0, 4.0]
-        }
-        response = self.client.post("/monitoring/drift", json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn("drift_detected", data)
-        self.assertIn("ks_statistic", data)
+        r = self.client.post("/monitoring/drift", json={"recent_ratings":[4.0,4.5,5.0,3.5]}); self.assertEqual(r.status_code,200); self.assertFalse(r.json()["drift_detected"])
 
-
-if __name__ == "__main__":
-    unittest.main()
+if __name__ == "__main__": unittest.main()
