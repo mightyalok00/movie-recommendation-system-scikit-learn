@@ -131,7 +131,6 @@ movie-recommendation-system/
 ├── README.md                                  # Documentation & benchmark report
 ├── requirements.txt                           # Production dependencies
 ├── requirements-dev.txt                       # CI quality / coverage / profiling tooling
-├── setup.py                                   # Optional package metadata
 ├── main.py                                    # Unified Command-Line Interface (CLI)
 ├── run_all.py                                 # Master runner across all 11 sections
 │
