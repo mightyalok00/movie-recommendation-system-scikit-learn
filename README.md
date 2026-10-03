@@ -128,7 +128,7 @@ movie-recommendation-system/
 ├── LICENSE                                    # MIT License
 ├── README.md                                  # Documentation & benchmark report
 ├── requirements.txt                           # Production dependencies
-├── requirements-dev.txt                       # CI quality / coverage tooling
+├── requirements-dev.txt                       # CI quality / coverage / profiling tooling
 ├── setup.py                                   # Optional package metadata
 ├── main.py                                    # Unified Command-Line Interface (CLI)
 ├── run_all.py                                 # Master runner across all 11 sections
@@ -169,6 +169,7 @@ movie-recommendation-system/
 │
 ├── scripts/                                   # Automation & dataset utilities
 │   ├── download_dataset.py                    # Official MovieLens dataset downloader
+│   ├── profile_dataset.py                     # YData Profiling report generator
 │   └── reproduce_benchmarks.py                # 1-command benchmark reproduction
 │
 ├── tests/                                     # Automated Unit & Integration Tests
@@ -229,6 +230,20 @@ python main.py api --port 8000
 ```bash
 docker-compose up -d
 ```
+
+### 7. Generate YData Profiling Reports
+
+YData Profiling is included as a development dependency for dataset-quality and EDA inspection.
+
+```bash
+pip install -r requirements-dev.txt
+python scripts/profile_dataset.py --data-dir E:\\ml-32m
+```
+
+The script writes HTML reports to `reports/ydata/`. To keep memory usage practical with MovieLens 32M, `ratings.csv` and `tags.csv` are profiled using bounded samples (100,000 rows by default), while smaller catalog tables are profiled in full.
+
+The generated HTML reports are local analysis artifacts and are not required for CI or application startup.
+
 
 ---
 
