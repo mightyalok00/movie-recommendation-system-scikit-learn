@@ -12,7 +12,7 @@
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Live Demo](https://movies-recommendation-ai-system.streamlit.app) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [113 Questions Solved](#-complete-113-question-solutions)
+[Live Demo](https://movies-recommendation-ai-system.streamlit.app) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
 
 <br/>
 
@@ -87,7 +87,7 @@ flowchart TD
 ```
 movie-recommendation-system/
 ├── .github/
-│   ├── workflows/ci.yml                       # Automated CI matrix (Python 3.10-3.12)
+│   ├── workflows/ci.yml                       # Dataset-independent CI validation (Python 3.12)
 │   ├── ISSUE_TEMPLATE/                        # Bug report & feature request templates
 │   └── PULL_REQUEST_TEMPLATE.md               # Standardized PR template
 ├── .env.example                               # Environment variable template
@@ -118,18 +118,18 @@ movie-recommendation-system/
 │   ├── evaluation.py                          # Temporal split & Ranking metrics (NDCG, MAP)
 │   └── pipeline.py                            # Scikit-learn Pipeline wrapper
 │
-├── solutions/                                 # 11 Dedicated modules solving all 113 questions
+├── solutions/                                 # 11 Dedicated modules solving all 105 questions
 │   ├── 01_dataset_understanding_validation.py # Section 1: Q1 - Q10
 │   ├── 02_exploratory_data_analysis.py        # Section 2: Q11 - Q22
 │   ├── 03_feature_engineering.py              # Section 3: Q23 - Q31
 │   ├── 04_content_based_recommendation.py     # Section 4: Q32 - Q39
-│   ├── 05_collaborative_filtering.py          # Section 5: Q40 - Q50
-│   ├── 06_preference_prediction_supervised.py # Section 6: Q51 - Q58
-│   ├── 07_dimensionality_reduction.py         # Section 7: Q59 - Q65
-│   ├── 08_hybrid_recommendation_system.py     # Section 8: Q66 - Q74
-│   ├── 09_evaluation_and_ranking.py           # Section 9: Q75 - Q87
-│   ├── 10_cold_start_and_production.py        # Section 10: Q88 - Q100
-│   └── 11_advanced_challenges.py              # Section 11: Q101 - Q113
+│   ├── 05_collaborative_filtering.py          # Section 5: Q40 - Q49
+│   ├── 06_preference_prediction_supervised.py # Section 6: Q50 - Q57
+│   ├── 07_dimensionality_reduction.py         # Section 7: Q58 - Q63
+│   ├── 08_hybrid_recommendation_system.py     # Section 8: Q64 - Q71
+│   ├── 09_evaluation_and_ranking.py           # Section 9: Q72 - Q83
+│   ├── 10_cold_start_and_production.py        # Section 10: Q84 - Q95
+│   └── 11_advanced_challenges.py              # Section 11: Q96 - Q105
 │
 ├── app/                                       # Web Application & REST Microservice
 │   ├── streamlit_app.py                       # Streamlit web dashboard with multi-filters
@@ -140,7 +140,7 @@ movie-recommendation-system/
 │   ├── download_dataset.py                    # Official MovieLens dataset downloader
 │   └── reproduce_benchmarks.py                # 1-command benchmark reproduction
 │
-├── tests/                                     # Automated Unit & Integration Tests (16/16 Pass)
+├── tests/                                     # Automated Unit & Integration Tests
 │   ├── test_data_loader.py                    # Memory-safe loading & CSR matrix tests
 │   ├── test_models.py                         # SVD, Genre, TF-IDF & Hybrid model tests
 │   ├── test_evaluation.py                     # Ranking metrics (NDCG, MAP, Recall, Precision)
@@ -148,7 +148,7 @@ movie-recommendation-system/
 │   └── test_api.py                            # FastAPI RESTful endpoint integration tests
 │
 ├── reports/                                   # Solution Dossiers & Metrics
-│   ├── MOVIELENS_32M_FULL_SOLUTIONS.md        # Comprehensive 113-question mathematical dossier
+│   ├── MOVIELENS_32M_105_QUESTION_SOLUTIONS.md        # Comprehensive 113-question mathematical dossier
 │   └── benchmark_results.csv                  # Offline benchmark metrics
 │
 └── artifacts/                                 # Serialized Pipeline Binaries
@@ -245,8 +245,8 @@ for movie_id, score in recommendations:
 
 ## 📚 Complete 113-Question Solutions
 
-All 113 questions from the MovieLens 32M Question Set are implemented and verified in [`solutions/`](solutions/):
-- Detailed mathematical derivations and explanations are cataloged in [`reports/MOVIELENS_32M_FULL_SOLUTIONS.md`](reports/MOVIELENS_32M_FULL_SOLUTIONS.md).
+All 105 questions from the MovieLens 32M Question Set are implemented and verified in [`solutions/`](solutions/):
+- Detailed mathematical derivations and explanations are cataloged in [`reports/MOVIELENS_32M_105_QUESTION_SOLUTIONS.md`](reports/MOVIELENS_32M_105_QUESTION_SOLUTIONS.md).
 - To run all solutions sequentially:
   ```bash
   python main.py run-all
@@ -267,3 +267,10 @@ Contributions are welcome! Please check our [Contributing Guide](CONTRIBUTING.md
 ## 📜 License
 
 Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
+
+
+### 🔁 Reproducibility & CI
+
+Canonical benchmark settings are defined in `config/experiment.py`: seed 42, a 20% temporal hold-out, relevance threshold 3.5, 32 SVD components, top-K values 5/10/20, and 100 sampled evaluation users. The committed benchmark CSV is an offline snapshot, not a fresh full-32M CI result.
+
+GitHub Actions validates Python compilation, exact Q1-Q105 coverage, dataset-independent unit/API tests, CLI startup, and a small benchmark smoke run without requiring the local 32M ratings file. See `reports/QUESTION_COVERAGE.md` for the mapping.
