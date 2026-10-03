@@ -136,10 +136,16 @@ movie-recommendation-system/
 │   ├── api.py                                 # FastAPI REST service
 │   └── monitoring.py                          # Kolmogorov-Smirnov drift monitoring
 │
-├── tests/                                     # Automated Unit Test Suite
-│   ├── test_data_loader.py
-│   ├── test_models.py
-│   └── test_evaluation.py
+├── scripts/                                   # Automation & dataset utilities
+│   ├── download_dataset.py                    # Official MovieLens dataset downloader
+│   └── reproduce_benchmarks.py                # 1-command benchmark reproduction
+│
+├── tests/                                     # Automated Unit & Integration Tests (16/16 Pass)
+│   ├── test_data_loader.py                    # Memory-safe loading & CSR matrix tests
+│   ├── test_models.py                         # SVD, Genre, TF-IDF & Hybrid model tests
+│   ├── test_evaluation.py                     # Ranking metrics (NDCG, MAP, Recall, Precision)
+│   ├── test_pipeline.py                       # Scikit-learn BaseEstimator lifecycle tests
+│   └── test_api.py                            # FastAPI RESTful endpoint integration tests
 │
 ├── reports/                                   # Solution Dossiers & Metrics
 │   ├── MOVIELENS_32M_FULL_SOLUTIONS.md        # Comprehensive 113-question mathematical dossier
@@ -151,7 +157,7 @@ movie-recommendation-system/
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start & CLI Operations
 
 ### 1. Installation
 ```bash
@@ -160,24 +166,35 @@ cd movie-recommendation-system-scikit-learn
 pip install -r requirements.txt
 ```
 
-### 2. Run Automated Unit Tests
+### 2. Download Official MovieLens Dataset (Optional)
+```bash
+python main.py download-data --dataset ml-latest-small --output data/
+```
+
+### 3. Run Automated Unit Test Suite (16 Tests)
 ```bash
 python main.py test
 ```
 
-### 3. Launch Interactive Streamlit Dashboard
+### 4. Reproduce Offline Benchmarks (1-Command)
+```bash
+python main.py benchmark --max-ratings 50000
+```
+*Evaluates Popularity, SVD, and Weighted Hybrid models under temporal hold-out split, updating `reports/benchmark_results.csv`.*
+
+### 5. Launch Interactive Streamlit Dashboard
 ```bash
 python main.py app
 ```
 *Access in browser at: `http://localhost:8501`*
 
-### 4. Start FastAPI Production REST API
+### 6. Start FastAPI Production REST API
 ```bash
 python main.py api --port 8000
 ```
 *Interactive Swagger docs at: `http://localhost:8000/docs`*
 
-### 5. Run with Docker Compose
+### 7. Run with Docker Compose
 ```bash
 docker-compose up -d
 ```

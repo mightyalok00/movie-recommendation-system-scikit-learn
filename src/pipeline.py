@@ -105,8 +105,13 @@ class MovieLensRecommendationPipeline(BaseEstimator):
             raise ValueError("Pipeline must be fitted first.")
         return self.hybrid_model.recommend(user_id=user_id, top_k=top_k, exclude_seen=exclude_seen)
 
-    def predict(self, user_item_pairs: List[Tuple[int, int]]) -> np.ndarray:
-        """Predicts rating scores for a batch of (user, item) pairs."""
+    def predict(self, user_item_pairs=None, user_id: Optional[int] = None, item_id: Optional[int] = None):
+        """Predicts rating scores for (user, item) pairs, single pair, or DataFrame."""
         if not self.is_fitted_:
             raise ValueError("Pipeline must be fitted first.")
-        return np.array([self.svd_model.predict_rating(u, i) for u, i in user_item_pairs])
+        if user_id is not None and item_id is not None:
+            return float(self.svd_model.predict_rating(user_id, item_id))
+        if isinstance(user_item_pairs, pd.DataFrame):
+            pairs = zip(user_item_pairs["userId"], user_item_pairs["movieId"])
+            return np.array([self.svd_model.predict_rating(u, i) for u, i in pairs])
+        return np.array([self.svd_model.predict_rating(u, i) for u, i in (user_item_pairs or [])])

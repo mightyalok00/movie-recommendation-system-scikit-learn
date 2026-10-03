@@ -150,7 +150,7 @@ class GenrePriorRecommender(BaseRecommender):
                     if mid not in seen and mid not in seen_in_rec:
                         selected_movies.append((mid, score))
                         seen_in_rec.add(mid)
-                        if len(selected_movies) >= top_k:
-                            break
+        if not selected_movies:
+            return self.popularity_model.recommend(top_k=top_k, exclude_seen=bool(exclude_seen), seen_movies=seen)
 
         return selected_movies

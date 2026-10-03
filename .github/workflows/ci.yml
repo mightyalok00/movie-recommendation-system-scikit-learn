@@ -27,6 +27,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run Unit Test Suite
+    - name: Run Unit & Integration Test Suite
       run: |
         python main.py test
+
+    - name: Verify Benchmark Reproduction Pipeline
+      run: |
+        python main.py benchmark --max-ratings 5000

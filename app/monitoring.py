@@ -32,20 +32,33 @@ class ModelDriftMonitor:
         """Records incoming user feedback rating."""
         self.live_ratings.append(rating)
 
-    def check_rating_drift(self) -> Dict[str, Any]:
+    def check_drift(self, new_ratings: Optional[List[float]] = None) -> Dict[str, Any]:
         """
-        Runs two-sample Kolmogorov-Smirnov test between baseline and live ratings.
+        Runs two-sample Kolmogorov-Smirnov test between baseline and live/input ratings.
         """
-        if len(self.live_ratings) < 50:
-            return {"status": "INSUFFICIENT_DATA", "p_value": 1.0, "drift_detected": False}
+        ratings_eval = np.array(new_ratings) if new_ratings is not None else np.array(self.live_ratings)
+        if len(ratings_eval) < 3:
+            return {
+                "status": "INSUFFICIENT_DATA",
+                "p_value": 1.0,
+                "ks_statistic": 0.0,
+                "drift_detected": False,
+                "interpretation": "Insufficient data points for KS test."
+            }
 
-        stat, p_val = ks_2samp(self.baseline_ratings, self.live_ratings)
+        stat, p_val = ks_2samp(self.baseline_ratings, ratings_eval)
+        drift_detected = bool(p_val < 0.05)
         return {
+            "status": "SUCCESS",
             "ks_statistic": float(stat),
             "p_value": float(p_val),
-            "drift_detected": bool(p_val < 0.05),
-            "sample_size": len(self.live_ratings)
+            "drift_detected": drift_detected,
+            "sample_size": len(ratings_eval),
+            "interpretation": "Significant distribution drift detected (p < 0.05)." if drift_detected else "No significant drift detected."
         }
+
+    def check_rating_drift(self) -> Dict[str, Any]:
+        return self.check_drift()
 
     def get_latency_summary(self) -> Dict[str, float]:
         """Calculates latency statistics."""

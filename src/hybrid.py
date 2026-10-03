@@ -36,18 +36,21 @@ class HybridRecommender(BaseRecommender):
 
     def __init__(
         self,
-        collaborative_model: MatrixFactorizationSVD,
-        content_model: ContentBasedRecommender,
-        popularity_model: ColdStartPopularityRecommender,
+        collaborative_model: Optional[MatrixFactorizationSVD] = None,
+        content_model: Optional[ContentBasedRecommender] = None,
+        popularity_model: Optional[ColdStartPopularityRecommender] = None,
+        collab_model: Optional[MatrixFactorizationSVD] = None,
         collab_weight: float = 0.60,
         content_weight: float = 0.30,
         popularity_weight: float = 0.10,
         diversity_penalty: float = 0.15
     ):
         super().__init__(name="WeightedHybridRecommender")
-        self.collab_model = collaborative_model
+        self.collab_model = collaborative_model if collaborative_model is not None else collab_model
+        self.collaborative_model = self.collab_model
         self.content_model = content_model
         self.pop_model = popularity_model
+        self.popularity_model = popularity_model
         
         self.collab_weight = collab_weight
         self.content_weight = content_weight

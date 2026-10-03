@@ -86,6 +86,18 @@ def command_api(args):
     uvicorn.run("app.api:app", host=host, port=port, reload=True)
 
 
+def command_benchmark(args):
+    """Executes automated benchmark reproduction suite."""
+    from scripts.reproduce_benchmarks import run_benchmark_reproduction
+    run_benchmark_reproduction(max_ratings=args.max_ratings)
+
+
+def command_download_data(args):
+    """Downloads official MovieLens dataset archives."""
+    from scripts.download_dataset import download_and_extract
+    download_and_extract(dataset_name=args.dataset, target_dir=args.output)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="MovieLens 32M Recommendation System Master CLI",
@@ -93,7 +105,8 @@ def main():
         epilog="""
 Examples:
     python main.py run-all
-    python main.py section 1
+    python main.py benchmark
+    python main.py download-data --dataset ml-latest-small
     python main.py test
     python main.py app
     python main.py api --port 8000
@@ -113,6 +126,17 @@ Examples:
     # Command: test
     p_test = subparsers.add_parser("test", help="Run unit test suite")
     p_test.set_defaults(func=command_test)
+
+    # Command: benchmark
+    p_bm = subparsers.add_parser("benchmark", help="Run offline temporal benchmark reproduction")
+    p_bm.add_argument("--max-ratings", type=int, default=100000, help="Max ratings to sample for evaluation")
+    p_bm.set_defaults(func=command_benchmark)
+
+    # Command: download-data
+    p_dl = subparsers.add_parser("download-data", help="Download official MovieLens dataset")
+    p_dl.add_argument("--dataset", choices=["ml-latest-small", "ml-32m", "ml-25m", "ml-100k"], default="ml-latest-small", help="Dataset name")
+    p_dl.add_argument("--output", default="./data", help="Output directory")
+    p_dl.set_defaults(func=command_download_data)
 
     # Command: app
     p_app = subparsers.add_parser("app", help="Launch Streamlit web dashboard")
