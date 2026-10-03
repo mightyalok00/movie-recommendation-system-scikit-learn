@@ -4,6 +4,7 @@
 <div align="center">
 
 [![CI - Unit Tests](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
+[![Run CI](https://img.shields.io/badge/Run%20CI-GitHub%20Actions-2088FF.svg?logo=githubactions&logoColor=white)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
 [![YData Profiling](https://img.shields.io/badge/YData%20Profiling-Run%20Workflow-6B46C1.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ydata-profile.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
@@ -13,7 +14,7 @@
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Live Demo](https://movies-recommendation-ai-system.streamlit.app) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
+[Live Demo](https://movies-recommendation-ai-system.streamlit.app) • [Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
 
 <br/>
 
