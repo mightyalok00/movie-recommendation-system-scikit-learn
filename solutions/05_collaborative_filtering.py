@@ -1,7 +1,7 @@
 """
 Section 5: Collaborative Filtering
 ==================================
-Answers Questions 40 through 50 with CSR sparse matrix construction, sparsity calculations,
+Answers Questions 40 through 49 with CSR sparse matrix construction, sparsity calculations,
 TruncatedSVD latent factor decomposition, Item-Item KNN, and unrated item filtering.
 """
 
