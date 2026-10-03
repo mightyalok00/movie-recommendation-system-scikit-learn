@@ -160,7 +160,9 @@ def load_app_core():
         tag_model = content_model
         movie_pop_counts = {mid: 500 for mid in pop_model.movie_scores}
     else:
-        # Fallback fast lightweight fit for environments without full 32M dataset on disk
+        # Community Cloud has no local 32M dataset. Keep the fallback deliberately small.
+        cloud_fallback = not Path(loader.ratings_path).exists()
+
         if Path(loader.ratings_path).exists():
             ratings_df = loader.load_ratings(max_rows=200_000, min_user_ratings=10)
         else:
@@ -181,11 +183,23 @@ def load_app_core():
             content_meta = loader.load_full_content_metadata()
         else:
             content_meta = movies_df.copy()
-            content_meta["combined_tags"] = content_meta["genres"].fillna("") + " " + content_meta["clean_title"].fillna("")
+            content_meta["combined_tags"] = (
+                content_meta["genres"].fillna("") + " "
+                + content_meta["clean_title"].fillna("")
+            )
 
-        content_model = ContentBasedRecommender().fit(content_meta)
-        genre_model = GenreRecommender().fit(movies_df)
-        tag_model = TagTFIDFRecommender().fit(content_meta)
+        # Limit the expensive TF-IDF index only when running without the 32M files.
+        model_movies = movies_df.head(15000).copy() if cloud_fallback else movies_df
+        content_meta = content_meta[
+            content_meta["movieId"].isin(model_movies["movieId"])
+        ].copy()
+
+        content_model = ContentBasedRecommender(
+            max_tag_features=12000,
+            max_title_features=8000,
+        ).fit(content_meta)
+        genre_model = GenreRecommender().fit(model_movies)
+        tag_model = TagTFIDFRecommender(max_features=12000).fit(content_meta)
         pop_model = ColdStartPopularityRecommender(min_ratings_m=10).fit(ratings_df)
         genre_prior = GenrePriorRecommender(pop_model).fit(movies_df)
         matrix, u2i, _, m2i, _ = loader.get_user_movie_sparse_matrix(ratings_df)
