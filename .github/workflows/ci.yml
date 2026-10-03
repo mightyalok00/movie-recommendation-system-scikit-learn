@@ -1,4 +1,5 @@
 name: CI
+# Final smoke-test workflow: runs from current main state.
 
 on:
   push:
