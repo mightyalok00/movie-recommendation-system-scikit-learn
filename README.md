@@ -4,7 +4,7 @@
 <div align="center">
 
 [![CI - Unit Tests](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
-[![Python 3.12](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Production%20REST-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20UI-FF4B4B.svg?logo=streamlit&logoColor=white)](https://streamlit.io/)
@@ -98,7 +98,7 @@ movie-recommendation-system/
 ├── LICENSE                                    # MIT License
 ├── README.md                                  # Documentation & benchmark report
 ├── requirements.txt                           # Production dependencies
-├── pyproject.toml & setup.py                  # Pip packaging specifications
+├── setup.py                                   # Optional package metadata
 ├── main.py                                    # Unified Command-Line Interface (CLI)
 ├── run_all.py                                 # Master runner across all 11 sections
 │
@@ -148,7 +148,7 @@ movie-recommendation-system/
 │   └── test_api.py                            # FastAPI RESTful endpoint integration tests
 │
 ├── reports/                                   # Solution Dossiers & Metrics
-│   ├── MOVIELENS_32M_105_QUESTION_SOLUTIONS.md        # Comprehensive 113-question mathematical dossier
+│   ├── MOVIELENS_32M_105_QUESTION_SOLUTIONS.md        # Comprehensive 105-question mathematical dossier
 │   └── benchmark_results.csv                  # Offline benchmark metrics
 │
 └── artifacts/                                 # Serialized Pipeline Binaries
@@ -171,7 +171,7 @@ pip install -r requirements.txt
 python main.py download-data --dataset ml-latest-small --output data/
 ```
 
-### 3. Run Automated Unit Test Suite (16 Tests)
+### 3. Run Automated Unit Test Suite
 ```bash
 python main.py test
 ```
@@ -243,9 +243,9 @@ for movie_id, score in recommendations:
 
 ---
 
-## 📚 Complete 113-Question Solutions
+## 📚 Complete 105-Question Solutions
 
-All 105 questions from the MovieLens 32M Question Set are implemented and verified in [`solutions/`](solutions/):
+All 105 questions from the MovieLens 32M Question Set are mapped across in [`solutions/`](solutions/):
 - Detailed mathematical derivations and explanations are cataloged in [`reports/MOVIELENS_32M_105_QUESTION_SOLUTIONS.md`](reports/MOVIELENS_32M_105_QUESTION_SOLUTIONS.md).
 - To run all solutions sequentially:
   ```bash
