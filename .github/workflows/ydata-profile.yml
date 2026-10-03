@@ -15,7 +15,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   profile:
@@ -41,7 +41,9 @@ jobs:
 
       - name: Download MovieLens 32M
         run: |
-          curl -L --fail --retry 3             -o movielens-32m.zip             https://files.grouplens.org/datasets/movielens/ml-32m.zip
+          curl -L --fail --retry 3 \
+            -o movielens-32m.zip \
+            https://files.grouplens.org/datasets/movielens/ml-32m.zip
           unzip -q movielens-32m.zip -d .
           test -f ml-32m/ratings.csv
           test -f ml-32m/movies.csv
@@ -50,7 +52,23 @@ jobs:
 
       - name: Generate YData Profiling reports
         run: |
-          python scripts/profile_dataset.py             --data-dir ml-32m             --output-dir reports/ydata             --ratings-sample ${{ inputs.ratings_sample }}             --tags-sample ${{ inputs.tags_sample }}
+          python scripts/profile_dataset.py \
+            --data-dir ml-32m \
+            --output-dir reports/ydata \
+            --ratings-sample ${{ inputs.ratings_sample }} \
+            --tags-sample ${{ inputs.tags_sample }}
+
+      - name: Commit YData reports to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/ydata/
+          if git diff --cached --quiet; then
+            echo "No YData report changes to commit."
+          else
+            git commit -m "data: add YData profiling reports"
+            git push
+          fi
 
       - name: Upload YData reports
         uses: actions/upload-artifact@v5
