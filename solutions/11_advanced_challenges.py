@@ -1,7 +1,7 @@
 """
 Section 11: Advanced Challenge Solutions
 ========================================
-Answers Questions 101 through 113 (Q114 - Q123) with ablation studies, personalization lift analysis,
+Answers Questions 96 through 105 with ablation studies, personalization lift analysis,
 multi-objective Pareto optimization (Relevance vs Diversity vs Novelty), and offline evaluation limitations.
 """
 
