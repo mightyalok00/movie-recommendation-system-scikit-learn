@@ -7,7 +7,7 @@ EXPECTED = [(1,10),(11,22),(23,31),(32,39),(40,49),(50,57),(58,63),(64,71),(72,8
 def main():
     ranges=[]
     for path in sorted((ROOT/'solutions').glob('[0-9][0-9]_*.py')):
-        match=re.search(r'Answers Questions (\\d+) through (\\d+)', path.read_text(encoding='utf-8'))
+        match=re.search(r'Answers Questions (\d+) through (\d+)', path.read_text(encoding='utf-8'))
         if not match: raise SystemExit(f'Missing question range: {path}')
         ranges.append((int(match.group(1)),int(match.group(2))))
     if ranges != EXPECTED: raise SystemExit(f'Expected {EXPECTED}, found {ranges}')
