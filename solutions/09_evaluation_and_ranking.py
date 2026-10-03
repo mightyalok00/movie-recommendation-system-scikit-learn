@@ -1,7 +1,7 @@
 """
 Section 9: Evaluation & Ranking
 ===============================
-Answers Questions 75 through 87 (Q88 - Q99) with temporal train/test partitioning,
+Answers Questions 72 through 83 with temporal train/test partitioning,
 Precision@K, Recall@K, MAP@K, NDCG@K, Catalog Coverage, Novelty, Diversity, and multi-model benchmarking.
 """
 
