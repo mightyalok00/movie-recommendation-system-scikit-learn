@@ -1,7 +1,7 @@
 """
 Section 8: Hybrid Recommendation System
 =======================================
-Answers Questions 66 through 74 (Q79 - Q86) with score normalization, dynamic weighting,
+Answers Questions 64 through 71 with score normalization, dynamic weighting,
 popularity dampening, genre diversity re-ranking, and cold-start fallback routing.
 """
 
