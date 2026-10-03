@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "movielens-recommender"
+version = "1.0.0"
+description = "Production-grade Recommendation System for MovieLens 32M using Scikit-Learn, SVD & Multi-Modal Content Filtering"
+readme = "README.md"
+authors = [{ name = "Data Science Team" }]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scipy>=1.10.0",
+    "scikit-learn>=1.3.0",
+    "joblib>=1.3.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "streamlit>=1.28.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
+    "tqdm>=4.65.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "config*", "data*", "app*", "solutions*"]
