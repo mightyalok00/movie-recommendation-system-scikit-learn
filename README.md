@@ -46,7 +46,7 @@ Live application: https://movies-recommendation-ai-system.streamlit.app/
 - **Production-Ready Artifacts:**
   - 🚀 **Streamlit Glassmorphic Dashboard** with multi-dimensional filtering (genres, release year range, Bayesian quality, popularity tiers).
   - ⚡ **FastAPI REST Microservice** with Pydantic request/response validation and Kolmogorov-Smirnov distribution drift monitoring.
-  - 🧪 **Automated Unit & API Test Suite** running on GitHub Actions across Python 3.10, 3.11, and 3.12.
+  - 🧪 **Automated Unit & API Test Suite** validated on **Python 3.12** in GitHub Actions, with static checks, coverage reporting, benchmark smoke tests, and a Docker build check.
 
 ---
 
@@ -92,6 +92,24 @@ flowchart TD
 | **SVD Matrix Factorization** | **0.0950** | **0.0800** | **0.0740** | 0.0555 | **0.0976** | **0.1786** | **0.1110** | **0.0560** | 0.41% | 9.4525 | 0.6777 |
 | **Weighted Hybrid (Proposed)** | 0.0940 | 0.0765 | 0.0648 | **0.0564** | 0.0944 | 0.1546 | 0.1072 | 0.0537 | **0.44%** | **9.8218** | **0.7266** |
 
+### Benchmark provenance
+
+The table above documents the project's **full-scale MovieLens 32M offline evaluation**. It is intentionally separate from the GitHub Actions benchmark step.
+
+- **Full benchmark:** MovieLens 32M, per-user temporal hold-out, relevance threshold defined by the evaluation pipeline, and ranking/coverage/novelty/diversity metrics.
+- **CI benchmark smoke test:** downloads `ml-latest-small` and evaluates at most 5,000 ratings. Its purpose is regression detection and execution validation—not reproduction of the 32M numbers above.
+- **Reproduce locally:** point `MOVIELENS_DATA_DIR` at the full dataset and run `python main.py benchmark` (optionally using `--max-ratings` for a bounded experiment).
+
+### Why this architecture
+
+- **TruncatedSVD collaborative filtering** captures latent user-item preference structure while remaining practical on sparse CSR matrices.
+- **TF-IDF + cosine nearest neighbors** contributes interpretable content similarity from genres, tags, and titles and helps when collaborative history is weak.
+- **Popularity prior** provides a robust fallback for cold-start cases.
+- **Weighted hybrid fusion** balances personalization, semantic similarity, and robustness instead of relying on one recommender family.
+- **MMR re-ranking** trades a small amount of raw relevance for lower redundancy and higher intra-list diversity.
+
+**Known limitations:** offline ranking metrics do not measure long-term satisfaction; tag quality and popularity can introduce bias; SVD factors are not directly interpretable; and the CI smoke dataset is too small to validate full-scale latency or memory behavior.
+
 ---
 
 ## 📁 Repository Structure
@@ -110,6 +128,7 @@ movie-recommendation-system/
 ├── LICENSE                                    # MIT License
 ├── README.md                                  # Documentation & benchmark report
 ├── requirements.txt                           # Production dependencies
+├── requirements-dev.txt                       # CI quality / coverage tooling
 ├── setup.py                                   # Optional package metadata
 ├── main.py                                    # Unified Command-Line Interface (CLI)
 ├── run_all.py                                 # Master runner across all 11 sections
