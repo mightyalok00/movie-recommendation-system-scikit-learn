@@ -142,7 +142,7 @@ def load_app_core():
     movies_df = loader.load_movies()
     links_target = Path(loader.links_path)
     if not links_target.exists():
-        links_target = BASE_DIR / "data" / "links.csv"
+        links_target = PROJECT_ROOT / "data" / "links.csv"
     if links_target.exists():
         links_df = pd.read_csv(links_target)
         movies_df = pd.merge(movies_df, links_df, on="movieId", how="left")
