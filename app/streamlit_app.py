@@ -160,16 +160,37 @@ def load_app_core():
         tag_model = content_model
         movie_pop_counts = {mid: 500 for mid in pop_model.movie_scores}
     else:
-        # Fallback fast lightweight fit
-        ratings_df = loader.load_ratings(max_rows=200_000, min_user_ratings=10)
-        content_meta = loader.load_full_content_metadata()
+        # Fallback fast lightweight fit for environments without full 32M dataset on disk
+        if Path(loader.ratings_path).exists():
+            ratings_df = loader.load_ratings(max_rows=200_000, min_user_ratings=10)
+        else:
+            np.random.seed(42)
+            n_samples = min(2000, len(movies_df))
+            sample_mids = movies_df["movieId"].head(n_samples).values
+            sample_users = np.random.randint(1, 200, size=8000)
+            sample_movies = np.random.choice(sample_mids, size=8000)
+            sample_ratings = np.random.choice([3.0, 3.5, 4.0, 4.5, 5.0], size=8000)
+            ratings_df = pd.DataFrame({
+                "userId": sample_users,
+                "movieId": sample_movies,
+                "rating": sample_ratings.astype(np.float32),
+                "timestamp": 1600000000
+            })
+
+        if Path(loader.tags_path).exists():
+            content_meta = loader.load_full_content_metadata()
+        else:
+            content_meta = movies_df.copy()
+            content_meta["combined_tags"] = content_meta["genres"].fillna("") + " " + content_meta["clean_title"].fillna("")
+
         content_model = ContentBasedRecommender().fit(content_meta)
         genre_model = GenreRecommender().fit(movies_df)
         tag_model = TagTFIDFRecommender().fit(content_meta)
-        pop_model = ColdStartPopularityRecommender(min_ratings_m=50).fit(ratings_df)
+        pop_model = ColdStartPopularityRecommender(min_ratings_m=10).fit(ratings_df)
         genre_prior = GenrePriorRecommender(pop_model).fit(movies_df)
         matrix, u2i, _, m2i, _ = loader.get_user_movie_sparse_matrix(ratings_df)
-        svd_model = MatrixFactorizationSVD(n_components=32, random_state=42).fit(matrix, u2i, m2i, ratings_df=ratings_df)
+        n_comps = min(16, len(u2i) - 1, len(m2i) - 1)
+        svd_model = MatrixFactorizationSVD(n_components=n_comps, random_state=42).fit(matrix, u2i, m2i, ratings_df=ratings_df)
         hybrid_model = HybridRecommender(svd_model, content_model, pop_model).fit(movies_df, ratings_df)
         movie_pop_counts = ratings_df["movieId"].value_counts().to_dict()
 
