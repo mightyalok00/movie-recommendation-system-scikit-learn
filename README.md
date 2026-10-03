@@ -24,6 +24,18 @@
 
 ---
 
+## 🚀 Live Demo
+
+### 🎬 Movie Recommendation AI System
+
+**Try the deployed Streamlit application:**
+
+[**👉 Open Movie Recommendation AI System**](https://movies-recommendation-ai-system.streamlit.app/)
+
+Live application: https://movies-recommendation-ai-system.streamlit.app/
+
+---
+
 ## 🌟 Key Highlights & Engineering Capabilities
 
 - **Massive Scale Ingestion:** Engineered specifically for the full **MovieLens 32M** dataset (`32,000,204` ratings, `87,585` movies, `200,948` users, `2,000,072` tags).
