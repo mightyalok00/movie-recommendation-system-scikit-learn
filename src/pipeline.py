@@ -3,7 +3,7 @@ Scikit-Learn Reusable Estimator Pipeline
 =========================================
 Encapsulates the end-to-end MovieLens recommender workflow into a custom,
 Scikit-learn compliant Estimator class conforming to sklearn BaseEstimator.
-Addresses Q123.
+Provides a reusable estimator interface for the canonical 105-question project.
 """
 
 from typing import Dict, List, Tuple, Optional, Any
