@@ -38,9 +38,9 @@ def run_section_11():
     )
 
     # -------------------------------------------------------------------------
-    # Q115 & Q116: Popularity Baseline vs Personalization Lift
+    # Personalization lift over popularity baseline
     # -------------------------------------------------------------------------
-    print("\n--- Q115 & Q116: Personalization Lift over Popularity Baseline ---")
+    print("\n--- Personalization Lift over Popularity Baseline ---")
     pop_model = ColdStartPopularityRecommender().fit(train_df)
     pop_res = evaluator.evaluate_model(pop_model, sample_users=150, top_k_list=[10])
 
@@ -58,7 +58,7 @@ def run_section_11():
     # -------------------------------------------------------------------------
     # Q119: Ablation Study: Genres vs Tags vs Latent Factors
     # -------------------------------------------------------------------------
-    print("\n--- Q119: Component Ablation Study ---")
+    print("\n--- Component Ablation Study ---")
     print("Ablation Results Summary:")
     print("  1. Genre-Only: Captures broad category relevance but lacks nuance (Coverage: High, Precision: Low).")
     print("  2. Tag TF-IDF: Captures fine-grained cinematic tropes and directors (Precision: Moderate, High Serendipity).")
@@ -68,7 +68,7 @@ def run_section_11():
     # -------------------------------------------------------------------------
     # Q122: Limitations of Offline MovieLens Evaluation
     # -------------------------------------------------------------------------
-    print("\n--- Q122: Real-World Limitations of Offline Evaluation ---")
+    print("\n--- Real-World Limitations of Offline Evaluation ---")
     print("Offline vs Real-World Gaps:")
     print("  1. Missing-Not-At-Random (MNAR): Users only rate movies they chose to watch (selection bias).")
     print("  2. Lack of Counterfactual Feedback: Offline evaluation cannot measure whether a user WOULD have liked an unrated recommendation.")
