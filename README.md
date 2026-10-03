@@ -4,6 +4,7 @@
 <div align="center">
 
 [![CI - Unit Tests](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
+[![YData Profiling](https://img.shields.io/badge/YData%20Profiling-Run%20Workflow-6B46C1.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ydata-profile.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Production%20REST-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -232,6 +233,8 @@ docker-compose up -d
 ```
 
 ### 7. Generate YData Profiling Reports
+
+**GitHub Actions:** [▶ Run YData Profiling](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ydata-profile.yml) — choose the sample sizes and download the generated HTML reports as a workflow artifact.
 
 YData Profiling is included as a development dependency for dataset-quality and EDA inspection.
 
