@@ -66,6 +66,20 @@ class TestScikitLearnPipeline(unittest.TestCase):
         self.assertIsInstance(pred_score, float)
         self.assertGreaterEqual(pred_score, 0.0)
 
+    def test_unfitted_pipeline_rejects_inference(self):
+        pipe = MovieLensRecommendationPipeline(n_svd_components=2)
+        with self.assertRaises(ValueError):
+            pipe.recommend(user_id=1, top_k=5)
+        with self.assertRaises(ValueError):
+            pipe.predict(user_id=1, item_id=1)
+
+    def test_empty_pair_prediction_after_fit(self):
+        pipe = MovieLensRecommendationPipeline(n_svd_components=2)
+        pipe.fit(self.ratings_df, self.movies_df, self.tags_df)
+        preds = pipe.predict(user_item_pairs=[])
+        self.assertIsInstance(preds, np.ndarray)
+        self.assertEqual(preds.size, 0)
+
 
 if __name__ == "__main__":
     unittest.main()
