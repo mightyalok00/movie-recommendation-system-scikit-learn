@@ -54,6 +54,9 @@ jobs:
       - name: Validate CLI
         run: python main.py --help
 
+      - name: Validate YData profiling CLI
+        run: python scripts/profile_dataset.py --help
+
       - name: Download MovieLens small dataset for benchmark smoke test
         run: python main.py download-data --dataset ml-latest-small --output data/
 
