@@ -37,6 +37,7 @@ venv.bak/
 # MovieLens Large Raw Datasets (Do not push 1GB+ raw ratings to GitHub)
 *.csv
 !reports/*.csv
+!data/*.csv
 *.zip
 *.tar.gz
 *.parquet
