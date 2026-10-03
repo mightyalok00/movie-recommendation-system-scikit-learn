@@ -19,10 +19,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from data.loader import MovieLensDataLoader
-from src.models.content_based import ContentBasedRecommender, GenreRecommender, TagTFIDFRecommender
-from src.models.cold_start import ColdStartPopularityRecommender, GenrePriorRecommender
-from src.models.collaborative import MatrixFactorizationSVD
-from src.models.hybrid import HybridRecommender
+from src.content_based import ContentBasedRecommender, GenreRecommender, TagTFIDFRecommender
+from src.cold_start import ColdStartPopularityRecommender, GenrePriorRecommender
+from src.collaborative import MatrixFactorizationSVD
+from src.hybrid import HybridRecommender
 from config.settings import REPORTS_DIR, ARTIFACTS_DIR
 
 # -----------------------------------------------------------------------------
