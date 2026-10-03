@@ -1,7 +1,7 @@
 """
 Section 6: Preference Prediction & Supervised Learning
 ======================================================
-Answers Questions 51 through 58 with binary preference framing, leakage-safe feature pipelines,
+Answers Questions 50 through 57 with binary preference framing, leakage-safe feature pipelines,
 HistGradientBoosting and LogisticRegression models, and classification metric evaluations.
 """
 
