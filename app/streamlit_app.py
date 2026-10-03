@@ -140,8 +140,11 @@ def load_app_core():
     
     # Fast load movies metadata & external links
     movies_df = loader.load_movies()
-    if Path(loader.links_path).exists():
-        links_df = pd.read_csv(loader.links_path)
+    links_target = Path(loader.links_path)
+    if not links_target.exists():
+        links_target = BASE_DIR / "data" / "links.csv"
+    if links_target.exists():
+        links_df = pd.read_csv(links_target)
         movies_df = pd.merge(movies_df, links_df, on="movieId", how="left")
     
     pipeline_path = ARTIFACTS_DIR / "movielens_pipeline.joblib"

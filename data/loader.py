@@ -42,8 +42,15 @@ class MovieLensDataLoader:
         Returns:
             pd.DataFrame: DataFrame containing movieId, title, clean_title, year, and genres.
         """
+        target_path = self.movies_path
+        if not os.path.exists(target_path):
+            from config.settings import BASE_DIR
+            fallback = BASE_DIR / "data" / "movies.csv"
+            if fallback.exists():
+                target_path = str(fallback)
+
         df = pd.read_csv(
-            self.movies_path,
+            target_path,
             dtype=DTYPE_MAPPINGS["movies"]
         )
         # Extract release year from title string (e.g., 'Toy Story (1995)' -> 1995)
