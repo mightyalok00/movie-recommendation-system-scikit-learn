@@ -4,7 +4,7 @@ Recommendation System Evaluation & Ranking Metrics Suite
 Implements leakage-safe temporal train/test splitting, top-K ranking metrics
 (Precision@K, Recall@K, MAP@K, NDCG@K), catalog coverage, intra-list diversity,
 and popularity novelty with bootstrap confidence intervals.
-Addresses Section 9 (Q88 - Q99) & Section 11 (Q114 - Q122).
+Supports the evaluation and ranking objectives in the canonical 105-question project.
 """
 
 import numpy as np
@@ -22,7 +22,7 @@ def temporal_train_test_split(
     Creates a temporal train/test split.
     If by_user=True, holds out the most recent `test_ratio` portion of ratings for each user.
     If by_user=False, splits globally on the timestamp quantile.
-    Addresses Q88, Q89, Q114.
+    Uses chronology to reduce leakage between training and evaluation interactions.
     """
     if by_user:
         # Sort chronologically per user
