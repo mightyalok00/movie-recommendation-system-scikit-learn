@@ -1,7 +1,7 @@
 """
 Section 7: Dimensionality Reduction & Representation Learning
 ============================================================
-Answers Questions 59 through 65 with TruncatedSVD spectral analysis, variance curves,
+Answers Questions 58 through 63 with TruncatedSVD spectral analysis, variance curves,
 low-dimensional projection, and semantic cluster validation.
 """
 
