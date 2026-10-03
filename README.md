@@ -12,7 +12,13 @@
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [113 Questions Solved](#-complete-113-question-solutions)
+[Live Demo](https://movies-recommendation-ai-system.streamlit.app) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [113 Questions Solved](#-complete-113-question-solutions)
+
+<br/>
+
+[![Live Web Dashboard Demo](assets/dashboard_preview.jpg)](https://movies-recommendation-ai-system.streamlit.app)
+
+*🔗 **Live Interactive App:** [movies-recommendation-ai-system.streamlit.app](https://movies-recommendation-ai-system.streamlit.app)*
 
 </div>
 
