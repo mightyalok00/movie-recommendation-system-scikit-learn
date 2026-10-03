@@ -8,7 +8,7 @@ and request latencies in real-time.
 import time
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from scipy.stats import ks_2samp
 
 
