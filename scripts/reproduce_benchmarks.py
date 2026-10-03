@@ -26,6 +26,7 @@ from src.collaborative import MatrixFactorizationSVD
 from src.hybrid import HybridRecommender
 from src.evaluation import RecommendationEvaluator, temporal_train_test_split
 from config.settings import REPORTS_DIR
+from config.experiment import RANDOM_SEED, TEST_RATIO, RELEVANCE_THRESHOLD, TOP_K_LIST, SAMPLE_USERS, SVD_COMPONENTS
 
 
 def run_benchmark_reproduction(max_ratings: int = 100_000):
@@ -43,7 +44,7 @@ def run_benchmark_reproduction(max_ratings: int = 100_000):
     print(f"    Loaded {len(movies_df):,} movies, {len(ratings_df):,} ratings.")
     
     print(">>> [2/5] Partitioning Temporal Train/Test Sets (Hold-Out Last 20% Interactions Per User)...")
-    train_df, test_df = temporal_train_test_split(ratings_df, test_ratio=0.20)
+    train_df, test_df = temporal_train_test_split(ratings_df, test_ratio=TEST_RATIO)
     print(f"    Train size: {len(train_df):,} | Test size: {len(test_df):,}")
     
     print(">>> [3/5] Fitting Models...")
@@ -57,8 +58,8 @@ def run_benchmark_reproduction(max_ratings: int = 100_000):
     
     # 3. SVD Collaborative Filtering
     matrix, u2i, _, m2i, _ = loader.get_user_movie_sparse_matrix(train_df)
-    n_comps = min(32, len(u2i) - 1, len(m2i) - 1)
-    svd_model = MatrixFactorizationSVD(n_components=n_comps, random_state=42).fit(matrix, u2i, m2i, ratings_df=train_df)
+    n_comps = min(SVD_COMPONENTS, len(u2i) - 1, len(m2i) - 1)
+    svd_model = MatrixFactorizationSVD(n_components=n_comps, random_state=RANDOM_SEED).fit(matrix, u2i, m2i, ratings_df=train_df)
     
     # 4. Weighted Hybrid Model
     hybrid_model = HybridRecommender(
@@ -73,7 +74,7 @@ def run_benchmark_reproduction(max_ratings: int = 100_000):
     
     print(">>> [4/5] Evaluating Offline Recommendation Metrics...")
     pop_dict = train_df["movieId"].value_counts().to_dict()
-    evaluator = RecommendationEvaluator(test_df=test_df, relevance_threshold=3.5, popularity_dict=pop_dict)
+    evaluator = RecommendationEvaluator(test_df=test_df, relevance_threshold=RELEVANCE_THRESHOLD, popularity_dict=pop_dict)
     
     models = {
         "Popularity Baseline": pop_model,
@@ -85,7 +86,7 @@ def run_benchmark_reproduction(max_ratings: int = 100_000):
     
     for name, model in models.items():
         print(f"    Evaluating {name}...")
-        metrics = evaluator.evaluate_model(model=model, sample_users=100, top_k_list=[5, 10, 20])
+        metrics = evaluator.evaluate_model(model=model, sample_users=SAMPLE_USERS, top_k_list=TOP_K_LIST)
         metrics["Model Architecture"] = name
         eval_results.append(metrics)
         
