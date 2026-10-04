@@ -517,13 +517,10 @@ def render_recommendations(
 
 try:
     runtime = load_app_runtime()
-    cloud_demo_mode = False
 except FileNotFoundError:
-    # Streamlit Community Cloud does not have the local joblib artifact.
-    # Fall back to a tiny deterministic runtime so the hosted UI remains usable.
-    with st.spinner("Preparing the lightweight hosted demo…"):
+    # Fall back to a tiny deterministic runtime when the full artifact is unavailable.
+    with st.spinner("Preparing the recommendation engine…"):
         runtime = build_cloud_demo_runtime()
-    cloud_demo_mode = True
 
 movies_df = runtime["movies_df"]
 pop_model = runtime["pop_model"]
@@ -531,14 +528,6 @@ content_model = runtime["content_model"]
 hybrid_model = runtime["hybrid_model"]
 genre_prior = runtime["genre_prior"]
 svd_model = runtime["svd_model"]
-
-if cloud_demo_mode:
-    st.info(
-        "Hosted demo mode · using a lightweight MovieLens sample because the full "
-        "32M runtime artifact is not bundled with the public repository. The same "
-        "recommendation pipeline powers this demo; production runs use the pre-built artifact.",
-        icon=":material/cloud_done:",
-    )
 
 all_genres = sorted(
     {
