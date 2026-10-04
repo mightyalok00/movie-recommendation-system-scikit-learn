@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from data_loader import MovieLensDataLoader
+from data.loader import MovieLensDataLoader
 
 
 class TestMovieLensDataLoader(unittest.TestCase):
