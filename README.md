@@ -157,7 +157,8 @@ movie-recommendation-system/
 │   ├── test_evaluation.py                     # Ranking metrics (NDCG, MAP, Recall, Precision)
 │   ├── test_pipeline.py                       # Scikit-learn BaseEstimator lifecycle tests
 │   ├── test_runtime.py                        # Artifact runtime contract tests
-│   ├── test_api.py                            # FastAPI RESTful endpoint integration tests
+│   ├── test_api.py                            # FastAPI RESTful endpoint contract tests
+│   ├── test_api_artifact_runtime.py            # FastAPI tests using a real serialized runtime artifact
 │   └── test_streamlit_app.py                  # Headless Streamlit UI interaction tests
 │
 ├── reports/                                   # Solution Dossiers & Metrics
@@ -257,7 +258,7 @@ The generated HTML reports are local analysis artifacts and are not required for
 
 The repository is **deployment-ready**, but no public Streamlit URL is currently verified in this repository. The app entrypoint is `app.py`, the root `requirements.txt` declares its dependencies, and `.streamlit/config.toml` provides the UI configuration. Streamlit Community Cloud supports this repository layout.
 
-To deploy:
+To deploy: [Deploy this repository to Streamlit Community Cloud](https://share.streamlit.io/deploy?repo=mightyalok00/movie-recommendation-system-scikit-learn&branch=main&appFile=app.py)
 
 1. Create a Streamlit Community Cloud app from this repository.
 2. Select branch `main` and entrypoint `app.py`.
