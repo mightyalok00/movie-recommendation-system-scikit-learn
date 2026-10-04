@@ -50,7 +50,7 @@ flowchart LR
     I --> J[Offline Build\nmain.py build-artifacts]
     J --> K[(movielens_runtime.joblib)]
     K --> L[FastAPI :8000]
-    K --> M[Streamlit app.py]
+    K --> M[Streamlit app/streamlit_app.py]
     L --> N[Swagger /docs]
     M --> O[Discovery UI]
 ```
@@ -107,7 +107,6 @@ movie-recommendation-system/
 ├── README.md                                  # Documentation & benchmark report
 ├── requirements.txt                           # Production dependencies
 ├── requirements-dev.txt                       # CI quality / coverage / profiling tooling
-├── app.py                                      # Streamlit movie-discovery interface
 ├── main.py                                    # Unified Command-Line Interface (CLI)
 ├── run_all.py                                 # Master runner across all 11 sections
 │
@@ -141,8 +140,9 @@ movie-recommendation-system/
 │   ├── 10_cold_start_and_production.py        # Section 10: Q84 - Q95
 │   └── 11_advanced_challenges.py              # Section 11: Q96 - Q105
 │
-├── app/                                       # REST Microservice
+├── app/                                       # Application interfaces
 │   ├── api.py                                 # FastAPI REST service
+│   ├── streamlit_app.py                       # Streamlit movie-discovery interface
 │   └── monitoring.py                          # Kolmogorov-Smirnov drift monitoring
 │
 ├── scripts/                                   # Automation & dataset utilities
@@ -256,12 +256,12 @@ The generated HTML reports are local analysis artifacts and are not required for
 
 ### Streamlit
 
-The repository is **deployment-ready**, but no public Streamlit URL is currently verified in this repository. The app entrypoint is `app.py`, the root `requirements.txt` declares its dependencies, and `.streamlit/config.toml` provides the UI configuration. Streamlit Community Cloud supports this repository layout.
+The repository is **deployment-ready**, but no public Streamlit URL is currently verified in this repository. The app entrypoint is `app/streamlit_app.py`, the root `requirements.txt` declares its dependencies, and `.streamlit/config.toml` provides the UI configuration. Streamlit Community Cloud supports this repository layout.
 
 To deploy: [Deploy this repository to Streamlit Community Cloud](https://share.streamlit.io/deploy?repo=mightyalok00/movie-recommendation-system-scikit-learn&branch=main&appFile=app.py)
 
 1. Create a Streamlit Community Cloud app from this repository.
-2. Select branch `main` and entrypoint `app.py`.
+2. Select branch `main` and entrypoint `app/streamlit_app.py`.
 3. Provide a deployment artifact at `MOVIELENS_ARTIFACT_PATH`.
 4. Start the app and confirm the three discovery tabs load successfully.
 
@@ -272,7 +272,7 @@ To deploy: [Deploy this repository to Streamlit Community Cloud](https://share.s
 ```bash
 python main.py download-data --dataset ml-latest-small --output data/
 python main.py build-artifacts --max-ratings 100000
-python -m streamlit run app.py
+python -m streamlit run app/streamlit_app.py
 ```
 
 Open `http://localhost:8501` and test:
@@ -338,7 +338,7 @@ for movie_id, score in recommendations:
 
 The serving layer is artifact-first. Training, TF-IDF construction, sparse-matrix creation, and SVD fitting happen offline through `build-artifacts`; they are never part of normal application startup. The Streamlit UI and API both load this pre-built runtime.
 
-The Streamlit interface in [`app.py`](app.py) loads the same serialized runtime bundle as the API, cached with `st.cache_resource`. It does not train models on startup. To run it locally:
+The Streamlit interface in [`app/streamlit_app.py`](app/streamlit_app.py) loads the same serialized runtime bundle as the API, cached with `st.cache_resource`. It does not train models on startup. To run it locally:
 
 ```bash
 pip install -r requirements.txt
