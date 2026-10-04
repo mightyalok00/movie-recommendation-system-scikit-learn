@@ -93,16 +93,25 @@ def prepare_runtime(bundle: Dict[str, Any]) -> Dict[str, Any]:
     if movies_df.empty:
         movie_title_map: Dict[int, str] = {}
         movie_genre_map: Dict[int, str] = {}
+        movie_lookup: Dict[int, Dict[str, Any]] = {}
         genre_prior = GenrePriorRecommender(pipeline.pop_model)
     else:
+        movies_df["movieId"] = movies_df["movieId"].astype(int)
+        if "year" not in movies_df.columns:
+            movies_df["year"] = (
+                movies_df["title"].astype(str).str.extract(r"\((\d{4})\)\s*$", expand=False)
+            )
+            movies_df["year"] = pd.to_numeric(movies_df["year"], errors="coerce").astype("Int64")
         movie_title_map = dict(zip(movies_df["movieId"].astype(int), movies_df["title"]))
         movie_genre_map = dict(zip(movies_df["movieId"].astype(int), movies_df["genres"]))
+        movie_lookup = movies_df.set_index("movieId").to_dict(orient="index")
         genre_prior = GenrePriorRecommender(pipeline.pop_model).fit(movies_df)
 
     return {
         "movies_df": movies_df,
         "movie_title_map": movie_title_map,
         "movie_genre_map": movie_genre_map,
+        "movie_lookup": movie_lookup,
         "content_model": pipeline.content_model,
         "pop_model": pipeline.pop_model,
         "genre_prior": genre_prior,

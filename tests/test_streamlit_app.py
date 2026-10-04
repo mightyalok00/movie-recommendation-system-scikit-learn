@@ -103,7 +103,7 @@ class StreamlitAppTests(unittest.TestCase):
         app.button(key="genre_button").click().run()
         self.assertFalse(app.exception)
 
-    def test_missing_artifact_shows_build_instructions(self):
+    def test_missing_artifact_falls_back_to_cloud_demo(self):
         self.env.stop()
         self.env = patch.dict(
             os.environ,
@@ -118,8 +118,7 @@ class StreamlitAppTests(unittest.TestCase):
 
         app = AppTest.from_file(PROJECT_ROOT / "app" / "streamlit_app.py", default_timeout=30).run()
         self.assertFalse(app.exception)
-        self.assertTrue(app.error)
-        self.assertTrue(any("build-artifacts" in code.value for code in app.code))
+        self.assertTrue(any("Hosted demo mode" in info.value for info in app.info))
 
 
 if __name__ == "__main__":
