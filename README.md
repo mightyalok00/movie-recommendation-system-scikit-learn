@@ -50,7 +50,7 @@ flowchart LR
     I --> J[Offline Build\nmain.py build-artifacts]
     J --> K[(movielens_runtime.joblib)]
     K --> L[FastAPI :8000]
-    K --> M[Streamlit app/streamlit_app/streamlit_app.py]
+    K --> M[Streamlit app/streamlit_app.py]
     L --> N[Swagger /docs]
     M --> O[Discovery UI]
 ```
@@ -258,7 +258,7 @@ The generated HTML reports are local analysis artifacts and are not required for
 
 The repository is **deployment-ready**, but no public Streamlit URL is currently verified in this repository. The app entrypoint is `app/streamlit_app.py`, the root `requirements.txt` declares its dependencies, and `.streamlit/config.toml` provides the UI configuration. Streamlit Community Cloud supports this repository layout.
 
-To deploy: [Deploy this repository to Streamlit Community Cloud](https://share.streamlit.io/deploy?repo=mightyalok00/movie-recommendation-system-scikit-learn&branch=main&appFile=app.py)
+To deploy: [Deploy this repository to Streamlit Community Cloud](https://share.streamlit.io/deploy?repo=mightyalok00/movie-recommendation-system-scikit-learn&branch=main&appFile=app/streamlit_app.py)
 
 1. Create a Streamlit Community Cloud app from this repository.
 2. Select branch `main` and entrypoint `app/streamlit_app.py`.
@@ -344,7 +344,7 @@ The Streamlit interface in [`app/streamlit_app.py`](app/streamlit_app.py) loads 
 pip install -r requirements.txt
 python main.py download-data --dataset ml-latest-small
 python main.py build-artifacts --max-ratings 100000
-python -m streamlit run app.py
+python -m streamlit run app/streamlit_app.py
 ```
 
 Use `--max-ratings` only for a small local/demo artifact; omit it to build from the full dataset. Runtime artifacts are intentionally excluded from Git. For deployment, build the artifact separately, make it available to the app environment, and set `MOVIELENS_ARTIFACT_PATH` to its location. The app displays setup instructions if no artifact is available.
