@@ -116,7 +116,7 @@ class StreamlitAppTests(unittest.TestCase):
         self.env.start()
         st.cache_resource.clear()
 
-        app = AppTest.from_file(PROJECT_ROOT / "app.py", default_timeout=30).run()
+        app = AppTest.from_file(PROJECT_ROOT / "app" / "streamlit_app.py", default_timeout=30).run()
         self.assertFalse(app.exception)
         self.assertTrue(app.error)
         self.assertTrue(any("build-artifacts" in code.value for code in app.code))
