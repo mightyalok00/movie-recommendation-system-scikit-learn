@@ -14,7 +14,7 @@ from src.content_based import ContentBasedRecommender, GenreRecommender
 from src.collaborative import MatrixFactorizationSVD
 from src.cold_start import ColdStartPopularityRecommender
 from src.hybrid import HybridRecommender
-from data_loader import MovieLensDataLoader
+from data.loader import MovieLensDataLoader
 
 
 class TestRecommenderModels(unittest.TestCase):
