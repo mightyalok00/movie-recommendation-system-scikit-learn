@@ -1,0 +1,83 @@
+"""
+Reusable recommendation runtime.
+
+The runtime is artifact-first so web applications can load pre-trained models
+without reading or fitting the full MovieLens dataset. Training belongs in
+scripts/build_artifacts.py and should never happen during application startup.
+"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any, Dict
+
+import joblib
+import pandas as pd
+
+from config.settings import ARTIFACTS_DIR
+from src.cold_start import GenrePriorRecommender
+from src.pipeline import MovieLensRecommendationPipeline
+
+
+RUNTIME_ARTIFACT_VERSION = 1
+DEFAULT_ARTIFACT_PATH = ARTIFACTS_DIR / "movielens_runtime.joblib"
+
+
+def get_artifact_path() -> Path:
+    """Return the configured runtime artifact path."""
+    configured = os.environ.get("MOVIELENS_ARTIFACT_PATH", "").strip()
+    return Path(configured) if configured else DEFAULT_ARTIFACT_PATH
+
+
+def load_runtime_artifact(path: str | Path | None = None) -> Dict[str, Any]:
+    """Load a pre-built runtime bundle."""
+    artifact_path = Path(path) if path else get_artifact_path()
+    if not artifact_path.exists():
+        raise FileNotFoundError(
+            f"Runtime artifact not found: {artifact_path}. "
+            "Run scripts/build_artifacts.py first."
+        )
+
+    bundle = joblib.load(artifact_path)
+    if isinstance(bundle, MovieLensRecommendationPipeline):
+        return {"version": 0, "pipeline": bundle, "movies_df": pd.DataFrame()}
+
+    if not isinstance(bundle, dict) or "pipeline" not in bundle:
+        raise ValueError(
+            f"Invalid runtime artifact format: {artifact_path}. "
+            "Expected a dictionary containing a fitted pipeline."
+        )
+
+    return bundle
+
+
+def prepare_runtime(bundle: Dict[str, Any]) -> Dict[str, Any]:
+    """Build lightweight lookup objects from an already-loaded bundle."""
+    pipeline = bundle["pipeline"]
+    movies_df = bundle.get("movies_df", pd.DataFrame()).copy()
+
+    if not isinstance(pipeline, MovieLensRecommendationPipeline):
+        raise TypeError("Runtime artifact contains an unexpected pipeline type.")
+
+    if movies_df.empty:
+        movie_title_map: Dict[int, str] = {}
+        movie_genre_map: Dict[int, str] = {}
+        genre_prior = GenrePriorRecommender(pipeline.pop_model)
+    else:
+        movie_title_map = dict(zip(movies_df["movieId"].astype(int), movies_df["title"]))
+        movie_genre_map = dict(zip(movies_df["movieId"].astype(int), movies_df["genres"]))
+        genre_prior = GenrePriorRecommender(pipeline.pop_model).fit(movies_df)
+
+    return {
+        "movies_df": movies_df,
+        "movie_title_map": movie_title_map,
+        "movie_genre_map": movie_genre_map,
+        "content_model": pipeline.content_model,
+        "pop_model": pipeline.pop_model,
+        "genre_prior": genre_prior,
+        "svd_model": pipeline.svd_model,
+        "hybrid_model": pipeline.hybrid_model,
+        "pipeline": pipeline,
+        "baseline_ratings": bundle.get("baseline_ratings"),
+    }

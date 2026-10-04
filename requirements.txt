@@ -1,4 +1,4 @@
-# Production dependencies for FastAPI and the recommendation engine
+# Production dependencies for the recommendation engine and FastAPI
 numpy==1.26.4
 pandas==2.2.3
 scipy==1.13.1

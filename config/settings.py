@@ -8,12 +8,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 configured_data_dir = os.environ.get("MOVIELENS_DATA_DIR", "").strip()
-if configured_data_dir:
-    DATA_DIR = Path(configured_data_dir)
-else:
-    local_data_dir = BASE_DIR / "data"
-    legacy_windows_dir = Path(r"E:\ml-32m")
-    DATA_DIR = legacy_windows_dir if legacy_windows_dir.exists() else local_data_dir
+DATA_DIR = Path(configured_data_dir) if configured_data_dir else BASE_DIR / "data"
 
 MOVIES_FILE = DATA_DIR / "movies.csv"
 RATINGS_FILE = DATA_DIR / "ratings.csv"

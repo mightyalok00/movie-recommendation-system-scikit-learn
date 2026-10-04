@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   fastapi-service:
@@ -7,9 +7,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MOVIELENS_DATA_DIR=/data/ml-32m
+      MOVIELENS_DATA_DIR: /data/ml-32m
+      MOVIELENS_ARTIFACT_PATH: /app/artifacts/movielens_runtime.joblib
+      MOVIELENS_RUNTIME_MODE: artifact
     volumes:
       - ./data:/app/data
       - ./artifacts:/app/artifacts
     restart: unless-stopped
-    command: ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000"]

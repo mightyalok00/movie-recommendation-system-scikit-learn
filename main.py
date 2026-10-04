@@ -1,33 +1,24 @@
 """
 MovieLens 32M Unified Command-Line Interface (CLI)
 ==================================================
-Provides convenient CLI commands to execute question pipelines, run tests,
-start the FastAPI service.
-
-Usage:
-    python main.py run-all                # Run all 11 solution sections and generate reports
-    python main.py section <num>          # Run a specific solution section (1 to 11)
-    python main.py test                   # Run the unit test suite
-    python main.py api [--port 8000]      # Start FastAPI REST microservice
+Provides commands for the question pipelines, tests, offline artifact
+building, benchmarks, and FastAPI service.
 """
 
 import sys
 import argparse
 from pathlib import Path
 
-# Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def command_run_all(args):
-    """Executes the complete master pipeline across all sections."""
     from run_all import main as run_all_main
     run_all_main()
 
 
 def command_run_section(args):
-    """Executes a single solution section by number."""
     sec_num = args.number
     sec_map = {
         1: "01_dataset_understanding_validation",
@@ -47,7 +38,6 @@ def command_run_section(args):
         return
 
     mod_name = f"solutions.{sec_map[sec_num]}"
-    print(f"\n>>> Running Section {sec_num} ({sec_map[sec_num]})...\n")
     import importlib
     mod = importlib.import_module(mod_name)
     func_name = f"run_section_{sec_num}"
@@ -58,8 +48,6 @@ def command_run_section(args):
 
 
 def command_test(args):
-    """Runs the unit test suite."""
-    print("\n>>> Running Automated Unit Tests...\n")
     import unittest
     loader = unittest.TestLoader()
     suite = loader.discover(start_dir=str(PROJECT_ROOT / "tests"), pattern="test_*.py")
@@ -68,30 +56,31 @@ def command_test(args):
     sys.exit(0 if result.wasSuccessful() else 1)
 
 
-def command_app(args):
-    """Launches the Streamlit interactive dashboard."""
-    app_path = PROJECT_ROOT / "app" / "streamlit_app.py"
-    print(f"\n>>> Launching Streamlit Web App from {app_path}...\n")
-    subprocess.run(["streamlit", "run", str(app_path)])
+def command_build_artifacts(args):
+    from scripts.build_artifacts import build_artifact
+    build_artifact(
+        output=Path(args.output),
+        max_ratings=args.max_ratings,
+        n_svd_components=args.svd_components,
+    )
 
 
 def command_api(args):
-    """Starts the FastAPI production REST service."""
-    port = args.port or 8000
-    host = args.host or "0.0.0.0"
-    print(f"\n>>> Starting FastAPI REST microservice on http://{host}:{port}...\n")
     import uvicorn
-    uvicorn.run("app.api:app", host=host, port=port, reload=True)
+    uvicorn.run(
+        "app.api:app",
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+    )
 
 
 def command_benchmark(args):
-    """Executes automated benchmark reproduction suite."""
     from scripts.reproduce_benchmarks import run_benchmark_reproduction
     run_benchmark_reproduction(max_ratings=args.max_ratings)
 
 
 def command_download_data(args):
-    """Downloads official MovieLens dataset archives."""
     from scripts.download_dataset import download_and_extract
     download_and_extract(dataset_name=args.dataset, target_dir=args.output)
 
@@ -100,45 +89,42 @@ def main():
     parser = argparse.ArgumentParser(
         description="MovieLens 32M Recommendation System Master CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-    python main.py run-all
-    python main.py benchmark
-    python main.py download-data --dataset ml-latest-small
-    python main.py test
-    python main.py api --port 8000
-        """
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Command: run-all
-    p_all = subparsers.add_parser("run-all", help="Execute all solution sections and generate reports")
+    p_all = subparsers.add_parser("run-all", help="Execute all solution sections")
     p_all.set_defaults(func=command_run_all)
 
-    # Command: section <N>
     p_sec = subparsers.add_parser("section", help="Run a specific solution section (1-11)")
-    p_sec.add_argument("number", type=int, help="Section number (1 to 11)")
+    p_sec.add_argument("number", type=int)
     p_sec.set_defaults(func=command_run_section)
 
-    # Command: test
     p_test = subparsers.add_parser("test", help="Run unit test suite")
     p_test.set_defaults(func=command_test)
 
-    # Command: benchmark
+    p_build = subparsers.add_parser("build-artifacts", help="Build deployment-ready model artifacts offline")
+    p_build.add_argument("--output", default="artifacts/movielens_runtime.joblib")
+    p_build.add_argument("--max-ratings", type=int, default=None)
+    p_build.add_argument("--svd-components", type=int, default=16)
+    p_build.set_defaults(func=command_build_artifacts)
+
     p_bm = subparsers.add_parser("benchmark", help="Run offline temporal benchmark reproduction")
-    p_bm.add_argument("--max-ratings", type=int, default=100000, help="Max ratings to sample for evaluation")
+    p_bm.add_argument("--max-ratings", type=int, default=100000)
     p_bm.set_defaults(func=command_benchmark)
 
-    # Command: download-data
     p_dl = subparsers.add_parser("download-data", help="Download official MovieLens dataset")
-    p_dl.add_argument("--dataset", choices=["ml-latest-small", "ml-32m", "ml-25m", "ml-100k"], default="ml-latest-small", help="Dataset name")
-    p_dl.add_argument("--output", default="./data", help="Output directory")
+    p_dl.add_argument(
+        "--dataset",
+        choices=["ml-latest-small", "ml-32m", "ml-25m", "ml-100k"],
+        default="ml-latest-small",
+    )
+    p_dl.add_argument("--output", default="./data")
     p_dl.set_defaults(func=command_download_data)
 
-    # Command: api
     p_api = subparsers.add_parser("api", help="Start FastAPI REST service")
-    p_api.add_argument("--host", type=str, default="0.0.0.0", help="Host address (default: 0.0.0.0)")
-    p_api.add_argument("--port", type=int, default=8000, help="Port number (default: 8000)")
+    p_api.add_argument("--host", default="0.0.0.0")
+    p_api.add_argument("--port", type=int, default=8000)
+    p_api.add_argument("--reload", action="store_true", help="Enable development auto-reload")
     p_api.set_defaults(func=command_api)
 
     args = parser.parse_args()
