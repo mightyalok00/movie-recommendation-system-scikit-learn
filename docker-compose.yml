@@ -1,20 +1,6 @@
 version: '3.8'
 
 services:
-  streamlit-dashboard:
-    build: .
-    container_name: movielens-streamlit
-    ports:
-      - "8501:8501"
-    environment:
-      - MOVIELENS_DATA_DIR=/data/ml-32m
-    volumes:
-      - ./data:/app/data
-      - ./artifacts:/app/artifacts
-      - ./reports:/app/reports
-    restart: unless-stopped
-    command: ["streamlit", "run", "app/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
-
   fastapi-service:
     build: .
     container_name: movielens-fastapi
