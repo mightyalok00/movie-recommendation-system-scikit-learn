@@ -21,8 +21,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy source code and configuration
 COPY . .
 
-# Expose ports for FastAPI (8000) and Streamlit (8501)
-EXPOSE 8000 8501
+# Expose FastAPI port
+EXPOSE 8000
 
-# Default command: launch Streamlit dashboard
-CMD ["streamlit", "run", "app/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Default command: launch FastAPI service
+CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000"]
