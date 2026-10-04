@@ -8,7 +8,12 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from src.runtime import get_artifact_path, load_runtime_artifact, prepare_runtime
+from src.runtime import (
+    build_cloud_demo_runtime,
+    get_artifact_path,
+    load_runtime_artifact,
+    prepare_runtime,
+)
 
 
 st.set_page_config(
@@ -171,8 +176,13 @@ def render_recommendations(
 
 try:
     runtime = load_app_runtime()
+    cloud_demo_mode = False
 except FileNotFoundError:
-    show_setup_help()
+    # Streamlit Community Cloud does not have the local joblib artifact.
+    # Fall back to a tiny deterministic runtime so the hosted UI remains usable.
+    with st.spinner("Preparing the lightweight hosted demo…"):
+        runtime = build_cloud_demo_runtime()
+    cloud_demo_mode = True
 
 movies_df = runtime["movies_df"]
 pop_model = runtime["pop_model"]
@@ -180,6 +190,14 @@ content_model = runtime["content_model"]
 hybrid_model = runtime["hybrid_model"]
 genre_prior = runtime["genre_prior"]
 svd_model = runtime["svd_model"]
+
+if cloud_demo_mode:
+    st.info(
+        "Hosted demo mode · using a lightweight MovieLens sample because the full "
+        "32M runtime artifact is not bundled with the public repository. The same "
+        "recommendation pipeline powers this demo; production runs use the pre-built artifact.",
+        icon=":material/cloud_done:",
+    )
 
 all_genres = sorted(
     {
