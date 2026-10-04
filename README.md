@@ -50,7 +50,7 @@ flowchart LR
     I --> J[Offline Build\nmain.py build-artifacts]
     J --> K[(movielens_runtime.joblib)]
     K --> L[FastAPI :8000]
-    K --> M[Streamlit app/streamlit_app.py]
+    K --> M[Streamlit app/streamlit_app/streamlit_app.py]
     L --> N[Swagger /docs]
     M --> O[Discovery UI]
 ```
