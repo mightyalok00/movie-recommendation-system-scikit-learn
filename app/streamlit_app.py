@@ -3,7 +3,17 @@
 from __future__ import annotations
 
 import re
+import sys
+from pathlib import Path
 from typing import Any
+
+# Community Cloud can execute a subdirectory entrypoint with a different
+# import-path layout than a local `streamlit run` from the repository root.
+# Add the repository root explicitly so local packages such as `src`, `data`,
+# and `config` are always importable.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 import pandas as pd
 import streamlit as st
