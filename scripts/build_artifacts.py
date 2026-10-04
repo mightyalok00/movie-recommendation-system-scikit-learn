@@ -32,6 +32,7 @@ def build_artifact(
     movies_df = loader.load_movies()
     tags_df = loader.load_tags(min_tag_freq=2)
     ratings_df = loader.load_ratings(max_rows=max_ratings, min_user_ratings=1)
+    links_df = loader.load_links()
 
     pipeline = MovieLensRecommendationPipeline(
         n_svd_components=n_svd_components,
@@ -48,6 +49,7 @@ def build_artifact(
         "version": 1,
         "pipeline": pipeline,
         "movies_df": movies_df[["movieId", "title", "genres"]].copy(),
+        "links_df": links_df.copy(),
         "baseline_ratings": ratings,
     }
 

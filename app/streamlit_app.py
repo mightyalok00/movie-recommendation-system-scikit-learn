@@ -1,526 +1,152 @@
-"""Streamlit interface for the pre-built MovieLens recommendation runtime."""
-
+"""CineMatch Streamlit application: discovery, personalization, cold start and model transparency."""
 from __future__ import annotations
-
-import re
-import sys
+import html, os, re, sys
 from pathlib import Path
+from urllib.parse import quote
 from typing import Any
+import pandas as pd
+import streamlit as st
 
-# Community Cloud can execute a subdirectory entrypoint with a different
-# import-path layout than a local `streamlit run` from the repository root.
-# Add the repository root explicitly so local packages such as `src`, `data`,
-# and `config` are always importable.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import pandas as pd
-import streamlit as st
+from src.runtime import build_cloud_demo_runtime, get_artifact_path, load_runtime_artifact, prepare_runtime
 
-from src.runtime import (
-    build_cloud_demo_runtime,
-    get_artifact_path,
-    load_runtime_artifact,
-    prepare_runtime,
-)
+st.set_page_config(page_title="CineMatch · Movie Intelligence", page_icon="🎬", layout="wide", initial_sidebar_state="expanded")
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap');
+:root{--body:'Plus Jakarta Sans',sans-serif;--display:'Outfit',sans-serif}
+.block-container{max-width:1480px;padding:1.5rem 2rem 4rem;font-family:var(--body)}
+.hero{padding:2.7rem 3rem;border:1px solid rgba(255,80,120,.28);border-radius:28px;background:radial-gradient(circle at 90% 15%,rgba(255,51,102,.18),transparent 38%),radial-gradient(circle at 10% 90%,rgba(79,172,254,.13),transparent 38%),linear-gradient(145deg,rgba(23,29,45,.9),rgba(8,12,21,.96));box-shadow:0 20px 55px -25px #000;margin-bottom:1.4rem}
+.hero h1{font-family:var(--display);font-size:clamp(2.4rem,5vw,4.4rem);line-height:1.02;margin:.4rem 0 1rem;color:#f8fafc;letter-spacing:-.045em}
+.gradient{background:linear-gradient(135deg,#ff3366,#ff8e53);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{max-width:900px;color:#94a3b8;font-size:1.05rem;line-height:1.7}
+.pill{display:inline-block;padding:.42rem .75rem;margin:.2rem;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#cbd5e1;font-size:.78rem;font-weight:700}
+.section-kicker{color:#94a3b8;font-size:.75rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin:1rem 0 .55rem}
+.movie-title{font-family:var(--display);font-size:1.1rem;font-weight:800;color:#f8fafc}.muted{color:#94a3b8;font-size:.82rem}.reason{color:#cbd5e1;font-size:.86rem;line-height:1.55;margin-top:.45rem}
+.tag{display:inline-block;padding:.2rem .5rem;margin:.15rem;border-radius:7px;background:rgba(255,255,255,.05);color:#cbd5e1;font-size:.7rem;font-weight:700}.score{font-family:var(--display);font-size:1.35rem;font-weight:900;color:#ff6584}
+.insight{padding:1rem;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.025);height:100%}
+div[data-testid="stMetric"]{border-radius:18px!important;background:linear-gradient(145deg,rgba(26,33,52,.6),rgba(15,20,32,.8))!important}
+[data-testid="stSidebar"]{background:linear-gradient(180deg,#0d121f,#080c15)!important}
+@media(max-width:800px){.block-container{padding:.8rem}.hero{padding:1.8rem 1.2rem}.hero h1{font-size:2.5rem}}
+</style>
+""", unsafe_allow_html=True)
 
-
-st.set_page_config(
-    page_title="CineMatch · Enterprise Movie Discovery",
-    page_icon="🎬",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-# Custom High-End Cinematic Styling
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-
-    :root {
-        --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-        --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-        --neon-sunset: linear-gradient(135deg, #FF3366 0%, #FF6584 50%, #FF8E53 100%);
-        --neon-cyan: linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%);
-        --neon-purple: linear-gradient(135deg, #B224EF 0%, #7579FF 100%);
-        --glass-bg: rgba(18, 24, 38, 0.7);
-        --glass-border: rgba(255, 255, 255, 0.09);
-        --glass-border-glow: rgba(255, 51, 102, 0.25);
-    }
-
-    /* Container Spacing & Background */
-    .block-container {
-        max-width: 1480px;
-        padding-top: 1.8rem;
-        padding-bottom: 4rem;
-        font-family: var(--font-body);
-    }
-
-    /* Hero Section */
-    .cinematic-hero {
-        position: relative;
-        overflow: hidden;
-        padding: 2.8rem 3rem 2.6rem;
-        border: 1px solid var(--glass-border-glow);
-        border-radius: 28px;
-        background: 
-            radial-gradient(circle at 88% 20%, rgba(255, 51, 102, 0.18), transparent 45%),
-            radial-gradient(circle at 15% 85%, rgba(79, 172, 254, 0.14), transparent 40%),
-            linear-gradient(145deg, rgba(23, 29, 45, 0.85), rgba(11, 15, 25, 0.95));
-        backdrop-filter: blur(20px);
-        box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-        margin-bottom: 1.8rem;
-    }
-
-    .hero-eyebrow-container {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.35rem 0.85rem;
-        border-radius: 9999px;
-        background: rgba(255, 51, 102, 0.12);
-        border: 1px solid rgba(255, 51, 102, 0.3);
-        color: #FF6584;
-        font-family: var(--font-body);
-        font-size: 0.75rem;
-        font-weight: 800;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-    }
-
-    .hero-pulse {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #FF3366;
-        box-shadow: 0 0 10px #FF3366;
-    }
-
-    .cinematic-hero h1 {
-        font-family: var(--font-display);
-        font-size: clamp(2.4rem, 5.5vw, 4.2rem);
-        font-weight: 900;
-        line-height: 1.04;
-        margin: 0.2rem 0 0.9rem;
-        letter-spacing: -0.045em;
-        background: linear-gradient(135deg, #FFFFFF 30%, #E2E8F0 65%, #94A3B8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .cinematic-hero h1 span.gradient-text {
-        background: var(--neon-sunset);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .cinematic-hero p {
-        max-width: 820px;
-        color: #94A3B8;
-        font-size: 1.1rem;
-        line-height: 1.7;
-        margin: 0 0 1.5rem 0;
-        font-weight: 400;
-    }
-
-    .hero-pills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
-    }
-
-    .tech-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.4rem 0.85rem;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: #CBD5E1;
-        font-size: 0.82rem;
-        font-weight: 600;
-    }
-
-    /* Metric Cards */
-    div[data-testid="stMetric"] {
-        background: linear-gradient(145deg, rgba(26, 33, 52, 0.6), rgba(15, 20, 32, 0.8)) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 20px !important;
-        padding: 1.25rem 1.4rem !important;
-        box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4) !important;
-        transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    div[data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-        border-color: rgba(255, 51, 102, 0.3) !important;
-    }
-
-    div[data-testid="stMetricLabel"] {
-        font-family: var(--font-body) !important;
-        color: #94A3B8 !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.06em !important;
-    }
-
-    div[data-testid="stMetricValue"] {
-        font-family: var(--font-display) !important;
-        font-size: 2rem !important;
-        font-weight: 800 !important;
-        color: #F8FAFC !important;
-    }
-
-    /* Filter Panel */
-    .filter-label {
-        font-size: 0.8rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #94A3B8;
-        margin-bottom: 0.6rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    /* Movie Recommendation Cards */
-    div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stHorizontalBlock"]) {
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .movie-header {
-        display: flex;
-        align-items: flex-start;
-        gap: 1.1rem;
-    }
-
-    .rank-badge {
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(255, 142, 83, 0.12));
-        border: 1px solid rgba(255, 51, 102, 0.4);
-        color: #FF8E53;
-        font-family: var(--font-display);
-        font-size: 1.15rem;
-        font-weight: 800;
-        box-shadow: 0 4px 12px rgba(255, 51, 102, 0.2);
-    }
-
-    .movie-info-wrap {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .movie-title {
-        font-family: var(--font-display);
-        font-size: 1.22rem;
-        font-weight: 800;
-        color: #F8FAFC;
-        letter-spacing: -0.02em;
-        line-height: 1.35;
-        margin-bottom: 0.35rem;
-    }
-
-    .badge-year {
-        display: inline-block;
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #94A3B8;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 0.15rem 0.55rem;
-        border-radius: 8px;
-        margin-left: 0.45rem;
-        vertical-align: middle;
-    }
-
-    .genres-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        margin-bottom: 0.35rem;
-    }
-
-    .genre-pill {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        border-radius: 8px;
-        font-size: 0.74rem;
-        font-weight: 700;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        color: #CBD5E1;
-        letter-spacing: 0.02em;
-    }
-
-    .movie-quality {
-        font-size: 0.82rem;
-        color: #94A3B8;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        margin-top: 0.25rem;
-    }
-
-    .stars {
-        color: #FBBF24;
-        font-size: 0.92rem;
-        letter-spacing: 0.06em;
-    }
-
-    /* Score Pill */
-    .score-pill {
-        position: relative;
-        text-align: center;
-        padding: 0.75rem 0.9rem;
-        border: 1px solid rgba(255, 51, 102, 0.35);
-        border-radius: 18px;
-        background: linear-gradient(145deg, rgba(255, 51, 102, 0.12), rgba(255, 142, 83, 0.06));
-        box-shadow: 0 4px 18px rgba(255, 51, 102, 0.15);
-    }
-
-    .score-pill .value {
-        font-family: var(--font-display);
-        font-size: 1.35rem;
-        font-weight: 900;
-        background: var(--neon-sunset);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        line-height: 1;
-        margin-bottom: 0.25rem;
-    }
-
-    .score-pill .label {
-        font-size: 0.68rem;
-        color: #94A3B8;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-    }
-
-    /* Primary Buttons */
-    button[kind="primary"] {
-        min-height: 3rem !important;
-        border-radius: 14px !important;
-        font-family: var(--font-display) !important;
-        font-weight: 800 !important;
-        font-size: 1rem !important;
-        background: var(--neon-sunset) !important;
-        border: none !important;
-        box-shadow: 0 4px 18px rgba(255, 51, 102, 0.35) !important;
-        transition: all 0.2s ease !important;
-    }
-
-    button[kind="primary"]:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(255, 51, 102, 0.55) !important;
-    }
-
-    /* Tabs Styling */
-    button[data-baseweb="tab"] {
-        font-family: var(--font-display) !important;
-        font-weight: 700 !important;
-        font-size: 1.05rem !important;
-        padding-top: 0.75rem !important;
-        padding-bottom: 0.75rem !important;
-    }
-
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0d121f 0%, #080c15 100%) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Header Presentation
-st.markdown(
-    """
-    <div class="cinematic-hero">
-      <div class="hero-eyebrow-container">
-        <div class="hero-badge">
-          <div class="hero-pulse"></div>
-          CineMatch Intelligence
-        </div>
-        <div class="hero-badge" style="background: rgba(79, 172, 254, 0.12); border-color: rgba(79, 172, 254, 0.3); color: #4FACFE;">
-          Scikit-Learn 1.5 · Python 3.12
-        </div>
-      </div>
-      <h1>Next-Gen <span class="gradient-text">Movie Discovery</span></h1>
-      <p>A production-grade hybrid recommendation engine combining TruncatedSVD latent collaborative filtering, sublinear TF-IDF multi-modal content similarity, Bayesian popularity priors, and Maximal Marginal Relevance (MMR) re-ranking.</p>
-      <div class="hero-pills">
-        <div class="tech-pill">⚡ TruncatedSVD Matrix Factorization (101.2× Compression)</div>
-        <div class="tech-pill">🧠 Multi-Modal NLP Tag & Genre Embeddings</div>
-        <div class="tech-pill">🛡️ Bayesian Cold-Start Prior</div>
-        <div class="tech-pill">🚀 Sub-10ms Inference</div>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
+st.markdown("""
+<div class="hero">
+<span class="pill">● CineMatch Intelligence</span><span class="pill">Scikit-Learn 1.5 · Python 3.12</span>
+<h1>Next-Gen <span class="gradient">Movie Discovery</span></h1>
+<p>Hybrid recommendation powered by TruncatedSVD collaborative filtering, TF-IDF content similarity, Bayesian popularity priors and diversity-aware re-ranking — with explainable results, discovery surfaces, cold-start onboarding and model transparency.</p>
+<span class="pill">⚡ Hybrid ranking</span><span class="pill">🧠 Content + tags</span><span class="pill">🛡️ Bayesian cold start</span><span class="pill">🎯 Explainable</span><span class="pill">📈 Model insights</span>
+</div>
+""", unsafe_allow_html=True)
 
 @st.cache_resource(show_spinner="Warming up the recommendation engine…")
 def load_app_runtime() -> dict[str, Any]:
-    """Load only the pre-built bundle; model training is an offline operation."""
-    runtime = prepare_runtime(load_runtime_artifact())
-    movies = runtime["movies_df"]
-    if movies.empty:
-        raise ValueError(
-            "The runtime artifact does not contain a movie catalog. "
-            "Rebuild it with scripts/build_artifacts.py."
-        )
-    return runtime
+    """Load the offline artifact without full-scale training at app startup."""
+    return prepare_runtime(load_runtime_artifact())
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def fetch_tmdb_poster(tmdb_id: int) -> str | None:
+    """Return a TMDB poster URL when an optional API key is configured."""
+    key = os.environ.get("TMDB_API_KEY", "").strip()
+    if not key or not tmdb_id:
+        return None
+    try:
+        from urllib.request import Request, urlopen
+        import json
+        request = Request(f"https://api.themoviedb.org/3/movie/{int(tmdb_id)}?api_key={quote(key)}", headers={"User-Agent":"CineMatch/1.0"})
+        with urlopen(request, timeout=2) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        poster_path = payload.get("poster_path")
+        return f"https://image.tmdb.org/t/p/w342{poster_path}" if poster_path else None
+    except Exception:
+        return None
 
-def show_setup_help() -> None:
-    """Explain how to create the required offline model artifact."""
-    artifact_path = get_artifact_path()
-    st.error("The recommendation model has not been built for this environment yet.")
-    st.markdown(
-        "CineMatch uses the repository's pre-trained runtime bundle. It does not "
-        "train models while the web app starts."
-    )
-    st.markdown("Build the bundle from the project root, then start Streamlit:")
-    st.code(
-        "python main.py build-artifacts\npython -m streamlit run app/streamlit_app.py",
-        language="bash",
-    )
-    st.caption(
-        f"Expected artifact: `{artifact_path}`. Set `MOVIELENS_ARTIFACT_PATH` "
-        "if your bundle is stored elsewhere."
-    )
-    st.stop()
+def movie_meta(movie_id: int) -> dict[str, Any]:
+    return runtime["movie_lookup"].get(int(movie_id), {})
 
+def movie_stats(movie_id: int) -> tuple[int, float, float]:
+    mid = int(movie_id)
+    count = int(runtime["pop_model"].movie_counts.get(mid, 0))
+    mean = float(runtime["pop_model"].movie_means.get(mid, runtime["pop_model"].global_mean_C))
+    bayes = float(runtime["pop_model"].movie_scores.get(mid, runtime["pop_model"].global_mean_C))
+    return count, mean, bayes
 
-def apply_filters(
-    candidates: list[tuple[int, float]],
-    runtime: dict[str, Any],
-    selected_genres: list[str],
-    year_range: tuple[int, int],
-    min_quality: float,
-    limit: int,
-) -> list[dict[str, Any]]:
-    """Apply shared discovery filters while preserving recommender ranking."""
+def poster_for(movie_id: int) -> str | None:
+    links = runtime.get("links_df")
+    if links is None or links.empty or "tmdbId" not in links.columns:
+        return None
+    rows = links[links["movieId"].astype(int) == int(movie_id)]
+    if rows.empty or pd.isna(rows.iloc[0]["tmdbId"]):
+        return None
+    return fetch_tmdb_poster(int(rows.iloc[0]["tmdbId"]))
+
+def apply_filters(candidates, selected_genres, year_range, min_quality, limit, reason=""):
     results = []
-    lookup = runtime["movie_lookup"]
-    quality_scores = runtime["pop_model"].movie_scores
-
     for movie_id, score in candidates:
-        meta = lookup.get(int(movie_id))
-        if meta is None:
+        meta = movie_meta(movie_id)
+        if not meta:
             continue
-
-        movie_genres = [
-            genre
-            for genre in str(meta.get("genres", "")).split("|")
-            if genre and genre != "(no genres listed)"
-        ]
-        if selected_genres and not set(selected_genres).intersection(movie_genres):
+        genres = [g for g in str(meta.get("genres","")).split("|") if g and g != "(no genres listed)"]
+        if selected_genres and not set(selected_genres).intersection(genres):
             continue
-
         year = meta.get("year")
         if pd.notna(year) and not year_range[0] <= int(year) <= year_range[1]:
             continue
-
-        quality = quality_scores.get(int(movie_id))
-        if quality is None:
-            quality = runtime["pop_model"].global_mean_C
-        if quality < min_quality:
+        count, mean, bayes = movie_stats(movie_id)
+        if bayes < min_quality:
             continue
-
-        results.append(
-            {
-                "movie_id": int(movie_id),
-                "title": str(meta.get("title", "Untitled")),
-                "genres": movie_genres,
-                "year": int(year) if pd.notna(year) else None,
-                "score": float(score),
-                "quality": float(quality) if quality is not None else None,
-            }
-        )
-        if len(results) == limit:
+        results.append({"movie_id":int(movie_id),"title":str(meta.get("title","Untitled")),"genres":genres,
+                        "year":int(year) if pd.notna(year) else None,"score":float(score),
+                        "quality":bayes,"mean":mean,"votes":count,"reason":reason})
+        if len(results) >= limit:
             break
     return results
 
-
-def render_recommendations(
-    recommendations: list[dict[str, Any]],
-    score_label: str,
-) -> None:
-    """Render recommendation results as responsive, cinematic cards."""
-    if not recommendations:
-        st.info(
-            "✨ No titles matched those filters. Try expanding your release year range, "
-            "selecting fewer genres, or lowering the quality threshold."
-        )
+def render_movie_cards(items, score_label, show_posters=False):
+    if not items:
+        st.info("No titles matched these controls. Expand the filters and try again.")
         return
-
-    for rank, movie in enumerate(recommendations, start=1):
-        with st.container(border=True, key=f"movie-card-{movie['movie_id']}"):
-            details, score = st.columns([6.4, 1.4], vertical_alignment="center", gap="medium")
-            with details:
-                year_html = f'<span class="badge-year">{movie["year"]}</span>' if movie["year"] else ""
-                genre_badges = "".join(
-                    f'<span class="genre-pill">{g}</span>' for g in movie["genres"]
-                ) or '<span class="genre-pill">General</span>'
-
-                quality_html = ""
-                if movie["quality"] is not None:
-                    stars_count = min(5, max(1, int(round(movie["quality"]))))
-                    stars_str = "★" * stars_count + "☆" * (5 - stars_count)
-                    quality_html = f'<div class="movie-quality"><span class="stars">{stars_str}</span> {movie["quality"]:.2f} / 5.0 Bayesian Rating</div>'
-
-                st.markdown(
-                    f"""
-                    <div class="movie-header">
-                        <div class="rank-badge">#{rank:02d}</div>
-                        <div class="movie-info-wrap">
-                            <div class="movie-title">{movie["title"]} {year_html}</div>
-                            <div class="genres-row">{genre_badges}</div>
-                            {quality_html}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with score:
-                st.markdown(
-                    f"""
-                    <div class="score-pill">
-                        <div class="value">{movie["score"]:.2f}</div>
-                        <div class="label">{score_label}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
+    for rank, movie in enumerate(items, 1):
+        with st.container(border=True):
+            cols = st.columns([1.0,4.9,1.1,1.1] if show_posters else [5.9,1.1,1.1], gap="medium")
+            offset = 0
+            if show_posters:
+                with cols[0]:
+                    poster = poster_for(movie["movie_id"])
+                    if poster:
+                        st.image(poster, width="stretch")
+                    else:
+                        st.markdown(f"<div class='insight'><b>#{rank:02d}</b><br><br>🎬<br><span class='muted'>Poster</span></div>", unsafe_allow_html=True)
+                offset = 1
+            with cols[offset]:
+                tags = "".join(f"<span class='tag'>{html.escape(g)}</span>" for g in movie["genres"]) or "<span class='tag'>General</span>"
+                st.markdown(f"<div class='movie-title'>#{rank:02d} {html.escape(movie['title'])}{' · '+str(movie['year']) if movie['year'] else ''}</div><div>{tags}</div><div class='muted'>⭐ {movie['mean']:.2f}/5 · Bayesian {movie['quality']:.2f} · {movie['votes']:,} ratings</div><div class='reason'>💡 {html.escape(movie['reason'] or 'Ranked by the selected recommendation strategy.')}</div>", unsafe_allow_html=True)
+                with st.expander("Why this movie?"):
+                    st.write(movie["reason"] or "Selected from the active candidate set.")
+                    a,b,c=st.columns(3)
+                    a.metric("Recommendation score", f"{movie['score']:.3f}")
+                    b.metric("Bayesian quality", f"{movie['quality']:.2f}")
+                    c.metric("Rating support", f"{movie['votes']:,}")
+            with cols[offset+1]:
+                st.markdown(f"<div class='score'>{movie['score']:.2f}<br><span class='muted'>{score_label}</span></div>", unsafe_allow_html=True)
+            with cols[offset+2]:
+                if st.button("Save", key=f"save-{movie['movie_id']}", use_container_width=True):
+                    st.session_state.setdefault("watchlist", [])
+                    if movie["movie_id"] not in st.session_state["watchlist"]:
+                        st.session_state["watchlist"].append(movie["movie_id"])
+                    st.toast(f"Saved {movie['title']}")
 
 try:
     runtime = load_app_runtime()
+    cloud_demo = False
 except FileNotFoundError:
-    # Fall back to a tiny deterministic runtime when the full artifact is unavailable.
-    with st.spinner("Preparing the recommendation engine…"):
+    with st.spinner("Preparing the lightweight hosted demo runtime…"):
         runtime = build_cloud_demo_runtime()
+    cloud_demo = True
 
 movies_df = runtime["movies_df"]
 pop_model = runtime["pop_model"]
@@ -529,202 +155,128 @@ hybrid_model = runtime["hybrid_model"]
 genre_prior = runtime["genre_prior"]
 svd_model = runtime["svd_model"]
 
-all_genres = sorted(
-    {
-        genre.strip()
-        for genres in movies_df["genres"].dropna()
-        for genre in str(genres).split("|")
-        if genre.strip() and genre.strip() != "(no genres listed)"
-    }
-)
+all_genres = sorted({g.strip() for values in movies_df["genres"].dropna() for g in str(values).split("|") if g.strip() and g.strip() != "(no genres listed)"})
 valid_years = movies_df["year"].dropna()
 year_min = int(valid_years.min()) if not valid_years.empty else 1900
 year_max = int(valid_years.max()) if not valid_years.empty else year_min
 
-# Metrics Row
-metric_catalog, metric_users, metric_components = st.columns(3)
-metric_catalog.metric("🎬 Movies in Catalog", f"{len(movies_df):,}")
-metric_users.metric("👤 User Profiles", f"{len(svd_model.user_to_idx):,}")
-metric_components.metric(
-    "⚡ Intelligence Stack",
-    "Hybrid + SVD",
-    help="Combines collaborative filtering with content similarity and Bayesian popularity priors.",
-)
+m1,m2,m3=st.columns(3)
+m1.metric("🎬 Movies in Catalog",f"{len(movies_df):,}")
+m2.metric("👤 User Profiles",f"{len(svd_model.user_to_idx):,}")
+m3.metric("⚡ Intelligence Stack","Hybrid + SVD",help="Collaborative filtering + content similarity + Bayesian popularity.")
 
-st.markdown('<div class="filter-label">🎛️ Discovery Controls & Filters</div>', unsafe_allow_html=True)
-with st.container(border=True, key="filter_panel"):
-    filter_a, filter_b, filter_c, filter_d = st.columns([2.2, 1.7, 1.5, 1.2], gap="medium")
-    with filter_a:
-        selected_genres = st.multiselect(
-            "Genre Match",
-            options=all_genres,
-            placeholder="All genres included",
-            help="Filter recommendations to include any of the selected genres.",
-            width="stretch",
-        )
-    with filter_b:
-        if year_min < year_max:
-            year_range = st.slider(
-                "Release Era",
-                min_value=year_min,
-                max_value=year_max,
-                value=(year_min, year_max),
-                width="stretch",
-            )
-        else:
-            year_range = (year_min, year_max)
-    with filter_c:
-        min_quality = st.slider(
-            "Min Quality Rating",
-            min_value=0.0,
-            max_value=5.0,
-            value=0.0,
-            step=0.1,
-            width="stretch",
-        )
-    with filter_d:
-        top_k = st.slider(
-            "Top Results",
-            min_value=5,
-            max_value=20,
-            value=10,
-            step=1,
-            width="stretch",
-        )
+with st.container(border=True):
+    st.markdown("<div class='section-kicker'>Discovery controls</div>",unsafe_allow_html=True)
+    f1,f2,f3,f4=st.columns([2.2,1.7,1.5,1.2])
+    with f1: selected_genres=st.multiselect("Genre Match",all_genres,placeholder="All genres")
+    with f2: year_range=st.slider("Release Era",year_min,year_max,(year_min,year_max)) if year_min<year_max else (year_min,year_max)
+    with f3: min_quality=st.slider("Min Quality",0.0,5.0,0.0,.1)
+    with f4: top_k=st.slider("Top Results",5,20,10)
 
-st.divider()
-similar_tab, personal_tab, genres_tab = st.tabs(
-    ["🎯 Similar Film Discovery", "👤 Personalized For You", "✨ Mood & Genre Explorer"]
-)
+similar_tab,personal_tab,cold_tab,discover_tab,insights_tab=st.tabs(["🎯 Similar Film","👤 For You","✨ Cold Start","🔥 Trending & Gems","📊 Model Insights"])
 
 with similar_tab:
-    st.subheader("Discover Through A Film You Love")
-    st.write(
-        "Search our catalog and uncover films sharing deep NLP plot semantics, tag embeddings, and genre profiles."
-    )
-    search_query = st.text_input(
-        "Search the movie catalog",
-        type="search",
-        placeholder="Try “Toy Story”, “Inception”, “Interstellar”, or “Pulp Fiction”",
-        key="movie_search",
-    ).strip()
-
-    if search_query:
-        matches = movies_df[
-            movies_df["title"].str.contains(
-                re.escape(search_query), case=False, na=False, regex=True
-            )
-        ].head(250)
-        candidate_ids = matches["movieId"].astype(int).tolist()
-        if not candidate_ids:
-            st.warning("No matching titles found. Try a shorter search term.")
+    st.subheader("Discover Through a Film You Love")
+    query=st.text_input("Search the catalog",placeholder="Try Inception, Toy Story, Interstellar…",key="movie_search").strip()
+    if query:
+        matches=movies_df[movies_df["title"].str.contains(re.escape(query),case=False,na=False,regex=True)].head(250)
     else:
-        catalog_ids = set(runtime["movie_lookup"])
-        candidate_ids = [
-            int(movie_id)
-            for movie_id, _ in pop_model.ranked_movies
-            if int(movie_id) in catalog_ids
-        ][:250]
-        st.caption("Showing popular catalog titles. Use the search bar above to look up any specific title.")
-
-    if candidate_ids:
-        seed_id = st.selectbox(
-            "Choose a starting film",
-            options=candidate_ids,
-            format_func=lambda movie_id: runtime["movie_lookup"].get(
-                int(movie_id), {"title": f"Movie {movie_id}"}
-            )["title"],
-            index=None,
-            placeholder="Select a seed movie...",
-            key="seed_movie",
-        )
-        if seed_id is not None:
-            seed_title = runtime["movie_lookup"][seed_id]["title"]
-            st.caption(f"Curating suggestions matching **{seed_title}**")
-        if seed_id is not None and st.button(
-            "Find Similar Films",
-            type="primary",
-            icon=":material/search:",
-            key="similar_button",
-        ):
-            with st.spinner("Analyzing semantic embeddings and similarity vectors…"):
-                raw = content_model.recommend(
-                    item_id=int(seed_id),
-                    top_k=max(top_k * 8, 80),
-                )
-                results = apply_filters(
-                    raw, runtime, selected_genres, year_range, min_quality, top_k
-                )
-            render_recommendations(results, "Similarity")
+        catalog_ids=set(runtime["movie_lookup"])
+        matches=movies_df[movies_df["movieId"].isin([mid for mid,_ in pop_model.ranked_movies if mid in catalog_ids][:250])]
+        st.caption("Showing popular titles. Search above to find a specific seed film.")
+    ids=matches["movieId"].astype(int).tolist()
+    if ids:
+        seed=st.selectbox("Starting film",ids,index=None,placeholder="Select a movie",format_func=lambda x:movie_meta(x).get("title",f"Movie {x}"))
+        if seed is not None and st.button("Find Similar Films",type="primary",use_container_width=True):
+            raw=content_model.recommend(item_id=int(seed),top_k=max(top_k*8,80))
+            reason=f"Content similarity to {movie_meta(seed).get('title','your seed film')}, emphasizing shared genre and tag signals."
+            render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Similarity",True)
 
 with personal_tab:
-    st.subheader("Collaborative Profile Personalization")
-    st.write(
-        "Blend historical viewing behavior with collaborative SVD embeddings and MMR diversity re-ranking."
-    )
-    user_id = st.number_input(
-        "MovieLens user ID",
-        min_value=1,
-        max_value=max(1, max(svd_model.user_to_idx, default=1)),
-        value=min(1, max(svd_model.user_to_idx, default=1)),
-        step=1,
-        key="movie_user_id",
-    )
-    if st.button(
-        "Generate Watchlist",
-        type="primary",
-        icon=":material/person_search:",
-        key="personal_button",
-    ):
-        if int(user_id) not in svd_model.user_to_idx:
-            st.warning(
-                "That user ID is not present in this model. Select a user ID within the training index."
-            )
+    st.subheader("Personalized For You")
+    user_max=max(svd_model.user_to_idx,default=1)
+    user_id=st.number_input("MovieLens user ID",1,max(1,user_max),min(1,user_max),key="movie_user_id")
+    if st.button("Generate Watchlist",type="primary",use_container_width=True):
+        uid=int(user_id)
+        if uid not in svd_model.user_to_idx:
+            st.warning("That user ID is not present in this runtime.")
         else:
-            history = hybrid_model.user_history_map.get(int(user_id), {})
-            st.caption(f"Found active profile with **{len(history):,}** rated films in history.")
-            with st.spinner("Synthesizing latent factors and personalized scoring…"):
-                raw = hybrid_model.recommend(
-                    user_id=int(user_id),
-                    top_k=max(top_k * 8, 80),
-                    exclude_seen=True,
-                )
-                results = apply_filters(
-                    raw, runtime, selected_genres, year_range, min_quality, top_k
-                )
-            render_recommendations(results, "Match Score")
+            history=hybrid_model.user_history_map.get(uid,{})
+            raw=hybrid_model.recommend(user_id=uid,top_k=max(top_k*8,80),exclude_seen=True)
+            reason=f"Hybrid ranking from {len(history):,} rated films; collaborative taste signals are blended with content and popularity."
+            st.caption(f"Profile has **{len(history):,}** rated films.")
+            render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Match",True)
 
-with genres_tab:
-    st.subheader("Mood-Driven Cold Start Exploration")
-    st.write(
-        "Pick your mood or favorite genres to generate Bayesian-smoothed recommendations without needing viewing history."
-    )
-    favorite_genres = st.multiselect(
-        "Select mood genres",
-        options=all_genres,
-        key="cold_start_genres",
-    )
-    if st.button(
-        "Explore Mood Recommendations",
-        type="primary",
-        icon=":material/auto_awesome:",
-        key="genre_button",
-    ):
-        with st.spinner("Calculating Bayesian-weighted genre affinity rankings…"):
-            raw = genre_prior.recommend(
-                preferred_genres=favorite_genres,
-                top_k=max(top_k * 8, 80),
-            )
-            results = apply_filters(
-                raw, runtime, selected_genres, year_range, min_quality, top_k
-            )
-        render_recommendations(results, "Quality Score")
+with cold_tab:
+    st.subheader("Cold-Start Onboarding")
+    st.write("No viewing history required. Pick genres and get Bayesian-smoothed recommendations.")
+    favorite=st.multiselect("Your favorite genres",all_genres,key="cold_start_genres")
+    if favorite and st.button("Build My Starter List",type="primary",use_container_width=True):
+        raw=genre_prior.recommend(preferred_genres=favorite,top_k=max(top_k*8,80))
+        reason=f"Cold-start ranking for {', '.join(favorite)} using Bayesian popularity and genre affinity."
+        render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Quality",True)
+    else:
+        st.info("Choose one or more genres to start your personalized onboarding.")
 
-st.markdown(
-    """
-    <div style="margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center; color: #64748B; font-size: 0.85rem;">
-      🎬 <strong>CineMatch</strong> — Enterprise MovieLens Recommendation Platform · Powered by Scikit-Learn, TruncatedSVD & FastAPI
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with discover_tab:
+    st.subheader("Discovery Radar")
+    popular=[(mid,score) for mid,score in pop_model.ranked_movies if mid in runtime["movie_lookup"]]
+    trend_results=apply_filters(popular,selected_genres,year_range,min_quality,top_k,"High Bayesian quality among the strongest catalog-wide popularity signals.")
+    counts=pop_model.movie_counts
+    threshold=max(100,int(pd.Series(list(counts.values())).quantile(.35))) if counts else 100
+    gems=sorted([(mid,score) for mid,score in pop_model.ranked_movies if mid in runtime["movie_lookup"] and 3<=counts.get(mid,0)<=threshold],key=lambda x:x[1],reverse=True)
+    gem_results=apply_filters(gems,selected_genres,year_range,min_quality,top_k,"Hidden gem: strong Bayesian quality with lighter rating support than the catalog's most popular titles.")
+    a,b=st.columns(2)
+    with a:
+        st.markdown("### 🔥 Trending / Popular")
+        render_movie_cards(trend_results,"Quality")
+    with b:
+        st.markdown("### 💎 Hidden Gems")
+        render_movie_cards(gem_results,"Quality")
+
+with insights_tab:
+    st.subheader("Model & Data Insights")
+    total_ratings=int(sum(pop_model.movie_counts.values()))
+    stats=pd.Series(list(pop_model.movie_means.values()),dtype="float64")
+    i1,i2,i3,i4=st.columns(4)
+    i1.metric("Ratings indexed",f"{total_ratings:,}")
+    i2.metric("Global mean",f"{pop_model.global_mean_C:.2f}/5")
+    i3.metric("Rated titles",f"{len(pop_model.movie_counts):,}")
+    i4.metric("SVD components",f"{getattr(svd_model,'n_components','—')}")
+    st.markdown("### Recommendation architecture")
+    c1,c2,c3=st.columns(3)
+    c1.markdown("<div class='insight'><b>🧠 Content engine</b><br><span class='muted'>TF-IDF over title, genre and aggregated tags for item similarity and sparse histories.</span></div>",unsafe_allow_html=True)
+    c2.markdown("<div class='insight'><b>⚡ Collaborative engine</b><br><span class='muted'>TruncatedSVD over the sparse user-item matrix learns latent preference structure.</span></div>",unsafe_allow_html=True)
+    c3.markdown("<div class='insight'><b>🛡️ Ranking layer</b><br><span class='muted'>Hybrid score fusion, Bayesian quality prior and genre-aware diversity re-ranking.</span></div>",unsafe_allow_html=True)
+    if not stats.empty:
+        q1,q2,q3=st.columns(3)
+        q1.metric("Median rating",f"{stats.median():.2f}")
+        q2.metric("Top 10% threshold",f"{stats.quantile(.9):.2f}")
+        q3.metric("Rating std. dev.",f"{stats.std():.2f}")
+        st.bar_chart(stats.round(2).value_counts().sort_index().head(20))
+
+with st.sidebar:
+    st.markdown("## 🎬 CineMatch")
+    st.caption("Recommendation control center")
+    st.markdown("### Your Watchlist")
+    watchlist=st.session_state.get("watchlist",[])
+    if not watchlist:
+        st.info("Use Save on any recommendation.")
+    else:
+        for mid in watchlist:
+            st.write(f"• {movie_meta(mid).get('title',f'Movie {mid}')}")
+        if st.button("Clear watchlist",use_container_width=True):
+            st.session_state["watchlist"]=[]
+            st.rerun()
+    st.divider()
+    st.markdown("### Poster enrichment")
+    if os.environ.get("TMDB_API_KEY"):
+        st.success("TMDB poster enrichment enabled.")
+    else:
+        st.caption("Optional: set TMDB_API_KEY to show live poster artwork. The app remains fully functional without it.")
+    st.divider()
+    st.caption(f"Runtime artifact: {get_artifact_path()}")
+    if cloud_demo:
+        st.caption("Hosted lightweight demo runtime is active; the full artifact remains artifact-first.")
+
+st.markdown("<div style='margin-top:3rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.08);text-align:center;color:#64748b;font-size:.82rem'>🎬 <b>CineMatch</b> · MovieLens recommendation platform · Scikit-Learn + TruncatedSVD + FastAPI</div>",unsafe_allow_html=True)

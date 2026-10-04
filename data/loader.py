@@ -202,6 +202,18 @@ class MovieLensDataLoader:
         matrix = csr_matrix((values, (rows, cols)), shape=(n_users, n_movies), dtype=np.float32)
         return matrix, user_to_idx, idx_to_user, movie_to_idx, idx_to_movie
 
+    def load_links(self) -> pd.DataFrame:
+        """Load MovieLens IMDb/TMDb identifiers when the links file is available."""
+        target_path = self.links_path
+        if not os.path.exists(target_path):
+            from config.settings import BASE_DIR
+            fallback = BASE_DIR / "data" / "links.csv"
+            if fallback.exists():
+                target_path = str(fallback)
+        if not os.path.exists(target_path):
+            return pd.DataFrame(columns=["movieId", "imdbId", "tmdbId"])
+        return pd.read_csv(target_path, dtype=DTYPE_MAPPINGS["links"])
+
     def load_full_content_metadata(self) -> pd.DataFrame:
         """
         Merges movies metadata with aggregated tags into a unified content representation.

@@ -63,6 +63,7 @@ def build_cloud_demo_runtime() -> Dict[str, Any]:
     movies = loader.load_movies()
     ratings = loader.load_ratings(max_rows=5_000)
     tags = loader.load_tags()
+    links = loader.load_links()
 
     pipeline = MovieLensRecommendationPipeline(
         n_svd_components=8,
@@ -76,6 +77,7 @@ def build_cloud_demo_runtime() -> Dict[str, Any]:
             "version": RUNTIME_ARTIFACT_VERSION,
             "pipeline": pipeline,
             "movies_df": movies,
+            "links_df": links,
             "baseline_ratings": ratings,
             "cloud_demo": True,
         }
@@ -86,6 +88,7 @@ def prepare_runtime(bundle: Dict[str, Any]) -> Dict[str, Any]:
     """Build lightweight lookup objects from an already-loaded bundle."""
     pipeline = bundle["pipeline"]
     movies_df = bundle.get("movies_df", pd.DataFrame()).copy()
+    links_df = bundle.get("links_df", pd.DataFrame()).copy()
 
     if not isinstance(pipeline, MovieLensRecommendationPipeline):
         raise TypeError("Runtime artifact contains an unexpected pipeline type.")
@@ -109,6 +112,7 @@ def prepare_runtime(bundle: Dict[str, Any]) -> Dict[str, Any]:
 
     return {
         "movies_df": movies_df,
+        "links_df": links_df,
         "movie_title_map": movie_title_map,
         "movie_genre_map": movie_genre_map,
         "movie_lookup": movie_lookup,

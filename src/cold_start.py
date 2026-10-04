@@ -29,6 +29,8 @@ class ColdStartPopularityRecommender(BaseRecommender):
         self.min_ratings_m = min_ratings_m
         self.ranked_movies: List[Tuple[int, float]] = []
         self.movie_scores: Dict[int, float] = {}
+        self.movie_counts: Dict[int, int] = {}
+        self.movie_means: Dict[int, float] = {}
         self.global_mean_C: float = 3.5
 
     def fit(self, ratings_df: pd.DataFrame) -> "ColdStartPopularityRecommender":
@@ -53,6 +55,8 @@ class ColdStartPopularityRecommender(BaseRecommender):
             for _, row in movie_stats.iterrows()
         ]
         self.movie_scores = dict(self.ranked_movies)
+        self.movie_counts = {int(row["movieId"]): int(row["count"]) for _, row in movie_stats.iterrows()}
+        self.movie_means = {int(row["movieId"]): float(row["mean"]) for _, row in movie_stats.iterrows()}
         self.is_fitted = True
         return self
 
