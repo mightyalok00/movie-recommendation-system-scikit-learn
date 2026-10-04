@@ -1,10 +1,9 @@
-# Production dependencies for Streamlit, FastAPI, and the recommendation engine
+# Production dependencies for FastAPI and the recommendation engine
 numpy==1.26.4
 pandas==2.2.3
 scipy==1.13.1
 scikit-learn==1.5.2
 joblib==1.4.2
-streamlit==1.40.2
 fastapi>=0.115,<1
 uvicorn[standard]>=0.34,<1
 pydantic>=2.10,<3
