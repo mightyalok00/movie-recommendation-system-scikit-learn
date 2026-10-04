@@ -1,5 +1,12 @@
 # 🎬 MovieLens 32M Enterprise Recommendation Engine
-### Production-Grade Hybrid Recommender powered by Scikit-Learn, TruncatedSVD & Multi-Modal NLP
+#
+## 🎬 Live Application
+
+[![CineMatch Streamlit Dashboard](docs/images/cinematch-streamlit-dashboard.jpg)](https://movies-recommendation-system-ai.streamlit.app/)
+
+**🚀 [Open the Live CineMatch App](https://movies-recommendation-system-ai.streamlit.app/)**
+
+## Production-Grade Hybrid Recommender powered by Scikit-Learn, TruncatedSVD & Multi-Modal NLP
 
 <div align="center">
 
