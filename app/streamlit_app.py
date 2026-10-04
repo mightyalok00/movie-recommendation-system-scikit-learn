@@ -187,7 +187,7 @@ with similar_tab:
     ids=matches["movieId"].astype(int).tolist()
     if ids:
         seed=st.selectbox("Starting film",ids,index=None,placeholder="Select a movie",format_func=lambda x:movie_meta(x).get("title",f"Movie {x}"),key="seed_movie")
-        if seed is not None and st.button("Find Similar Films",type="primary",use_container_width=True):
+        if seed is not None and st.button("Find Similar Films",type="primary",use_container_width=True,key="similar_button"):
             raw=content_model.recommend(item_id=int(seed),top_k=max(top_k*8,80))
             reason=f"Content similarity to {movie_meta(seed).get('title','your seed film')}, emphasizing shared genre and tag signals."
             render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Similarity",True,"similar")
@@ -196,7 +196,7 @@ with personal_tab:
     st.subheader("Personalized For You")
     user_max=max(svd_model.user_to_idx,default=1)
     user_id=st.number_input("MovieLens user ID",1,max(1,user_max),min(1,user_max),key="movie_user_id")
-    if st.button("Generate Watchlist",type="primary",use_container_width=True):
+    if st.button("Generate Watchlist",type="primary",use_container_width=True,key="personal_button"):
         uid=int(user_id)
         if uid not in svd_model.user_to_idx:
             st.warning("That user ID is not present in this runtime.")
@@ -211,7 +211,7 @@ with cold_tab:
     st.subheader("Cold-Start Onboarding")
     st.write("No viewing history required. Pick genres and get Bayesian-smoothed recommendations.")
     favorite=st.multiselect("Your favorite genres",all_genres,key="cold_start_genres")
-    if favorite and st.button("Build My Starter List",type="primary",use_container_width=True):
+    if favorite and st.button("Build My Starter List",type="primary",use_container_width=True,key="genre_button"):
         raw=genre_prior.recommend(preferred_genres=favorite,top_k=max(top_k*8,80))
         reason=f"Cold-start ranking for {', '.join(favorite)} using Bayesian popularity and genre affinity."
         render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Quality",True,"cold")
