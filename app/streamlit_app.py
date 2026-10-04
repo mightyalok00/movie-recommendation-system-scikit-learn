@@ -125,7 +125,7 @@ def render_movie_cards(items, score_label, show_posters=False, key_prefix="resul
             with cols[offset]:
                 tags = "".join(f"<span class='tag'>{html.escape(g)}</span>" for g in movie["genres"]) or "<span class='tag'>General</span>"
                 st.markdown(f"<div class='movie-title'>#{rank:02d} {html.escape(movie['title'])}{' · '+str(movie['year']) if movie['year'] else ''}</div><div>{tags}</div><div class='muted'>⭐ {movie['mean']:.2f}/5 · Bayesian {movie['quality']:.2f} · {movie['votes']:,} ratings</div><div class='reason'>💡 {html.escape(movie['reason'] or 'Ranked by the selected recommendation strategy.')}</div>", unsafe_allow_html=True)
-                with st.expander("Why this movie?", key=f"why-{key_prefix}-{movie['movie_id']}"):
+                with st.expander("Why this movie?"):
                     st.write(movie["reason"] or "Selected from the active candidate set.")
                     a,b,c=st.columns(3)
                     a.metric("Recommendation score", f"{movie['score']:.3f}")

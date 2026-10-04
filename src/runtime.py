@@ -84,11 +84,42 @@ def build_cloud_demo_runtime() -> Dict[str, Any]:
     )
 
 
+def _hydrate_popularity_stats(
+    pipeline: MovieLensRecommendationPipeline,
+    ratings_df: pd.DataFrame | None,
+) -> None:
+    """Backfill popularity statistics for artifacts built before v2.
+
+    Older serialized artifacts only contain Bayesian scores. The UI can still
+    use those artifacts safely by deriving rating counts and means from the
+    bundled baseline ratings when available.
+    """
+    pop_model = pipeline.pop_model
+    if hasattr(pop_model, "movie_counts") and hasattr(pop_model, "movie_means"):
+        return
+
+    counts: Dict[int, int] = {}
+    means: Dict[int, float] = {}
+    if (
+        ratings_df is not None
+        and not ratings_df.empty
+        and {"movieId", "rating"}.issubset(ratings_df.columns)
+    ):
+        grouped = ratings_df.groupby("movieId")["rating"].agg(["count", "mean"])
+        counts = {int(mid): int(row["count"]) for mid, row in grouped.iterrows()}
+        means = {int(mid): float(row["mean"]) for mid, row in grouped.iterrows()}
+
+    pop_model.movie_counts = counts
+    pop_model.movie_means = means
+
+
 def prepare_runtime(bundle: Dict[str, Any]) -> Dict[str, Any]:
     """Build lightweight lookup objects from an already-loaded bundle."""
     pipeline = bundle["pipeline"]
     movies_df = bundle.get("movies_df", pd.DataFrame()).copy()
     links_df = bundle.get("links_df", pd.DataFrame()).copy()
+    baseline_ratings = bundle.get("baseline_ratings")
+    _hydrate_popularity_stats(pipeline, baseline_ratings)
 
     if not isinstance(pipeline, MovieLensRecommendationPipeline):
         raise TypeError("Runtime artifact contains an unexpected pipeline type.")
@@ -122,5 +153,5 @@ def prepare_runtime(bundle: Dict[str, Any]) -> Dict[str, Any]:
         "svd_model": pipeline.svd_model,
         "hybrid_model": pipeline.hybrid_model,
         "pipeline": pipeline,
-        "baseline_ratings": bundle.get("baseline_ratings"),
+        "baseline_ratings": baseline_ratings,
     }
