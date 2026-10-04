@@ -9,32 +9,15 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Production%20REST-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20UI-FF4B4B.svg?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Live Demo](https://movies-recommendation-ai-system.streamlit.app) • [Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
+[Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
 
 <br/>
 
-[![Live Web Dashboard Demo](assets/dashboard_preview.jpg)](https://movies-recommendation-ai-system.streamlit.app)
-
-*🔗 **Live Interactive App:** [movies-recommendation-ai-system.streamlit.app](https://movies-recommendation-ai-system.streamlit.app)*
-
 </div>
-
----
-
-## 🚀 Live Demo
-
-### 🎬 Movie Recommendation AI System
-
-**Try the deployed Streamlit application:**
-
-[**👉 Open Movie Recommendation AI System**](https://movies-recommendation-ai-system.streamlit.app/)
-
-Live application: https://movies-recommendation-ai-system.streamlit.app/
 
 ---
 
@@ -46,7 +29,6 @@ Live application: https://movies-recommendation-ai-system.streamlit.app/
 - **Hybrid Score Fusion & MMR Re-Ranking:** Dynamic linear fusion ($\alpha \cdot S_{\text{collab}} + \beta \cdot S_{\text{content}} + \gamma \cdot S_{\text{pop}}$) accompanied by **Maximal Marginal Relevance (MMR)** for intra-list diversity.
 - **Cold-Start Resilience:** Seamless onboarding with genre-prior preference elicitation and Bayesian-smoothed IMDB rating calculations.
 - **Production-Ready Artifacts:**
-  - 🚀 **Streamlit Glassmorphic Dashboard** with multi-dimensional filtering (genres, release year range, Bayesian quality, popularity tiers).
   - ⚡ **FastAPI REST Microservice** with Pydantic request/response validation and Kolmogorov-Smirnov distribution drift monitoring.
   - 🧪 **Automated Unit & API Test Suite** validated on **Python 3.12** in GitHub Actions, with static checks, coverage reporting, benchmark smoke tests, and a Docker build check.
 
@@ -76,9 +58,8 @@ flowchart TD
     end
 
     subgraph Serving & Interfaces
-        I --> J[Streamlit Interactive Dashboard :8501]
-        I --> K[FastAPI RESTful API :8000]
-        I --> L[Scikit-Learn Reusable Pipeline]
+        I --> J[FastAPI RESTful API :8000]
+        I --> K[Scikit-Learn Reusable Pipeline]
     end
 ```
 
@@ -125,7 +106,7 @@ movie-recommendation-system/
 ├── .env.example                               # Environment variable template
 ├── .gitignore                                 # Git rules ignoring 1GB+ raw datasets
 ├── Dockerfile                                 # Multi-stage production container
-├── docker-compose.yml                         # 1-click Streamlit & FastAPI orchestration
+├── docker-compose.yml                         # FastAPI orchestration
 ├── Makefile                                   # Command shortcuts
 ├── LICENSE                                    # MIT License
 ├── README.md                                  # Documentation & benchmark report
@@ -163,8 +144,7 @@ movie-recommendation-system/
 │   ├── 10_cold_start_and_production.py        # Section 10: Q84 - Q95
 │   └── 11_advanced_challenges.py              # Section 11: Q96 - Q105
 │
-├── app/                                       # Web Application & REST Microservice
-│   ├── streamlit_app.py                       # Streamlit web dashboard with multi-filters
+├── app/                                       # REST Microservice
 │   ├── api.py                                 # FastAPI REST service
 │   └── monitoring.py                          # Kolmogorov-Smirnov drift monitoring
 │
@@ -215,19 +195,13 @@ python main.py benchmark --max-ratings 50000
 ```
 *Evaluates Popularity, SVD, and Weighted Hybrid models under temporal hold-out split, updating `reports/benchmark_results.csv`.*
 
-### 5. Launch Interactive Streamlit Dashboard
-```bash
-python main.py app
-```
-*Access in browser at: `http://localhost:8501`*
-
-### 6. Start FastAPI Production REST API
+### 5. Start FastAPI Production REST API
 ```bash
 python main.py api --port 8000
 ```
 *Interactive Swagger docs at: `http://localhost:8000/docs`*
 
-### 7. Run with Docker Compose
+### 6. Run with Docker Compose
 ```bash
 docker-compose up -d
 ```
