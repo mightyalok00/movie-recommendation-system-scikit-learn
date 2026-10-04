@@ -8,13 +8,11 @@ Usage:
     python main.py run-all                # Run all 11 solution sections and generate reports
     python main.py section <num>          # Run a specific solution section (1 to 11)
     python main.py test                   # Run the unit test suite
-    python main.py app                    # Launch interactive Streamlit dashboard
     python main.py api [--port 8000]      # Start FastAPI REST microservice
 """
 
 import sys
 import argparse
-import subprocess
 from pathlib import Path
 
 # Add project root to path
@@ -108,7 +106,6 @@ Examples:
     python main.py benchmark
     python main.py download-data --dataset ml-latest-small
     python main.py test
-    python main.py app
     python main.py api --port 8000
         """
     )
@@ -137,10 +134,6 @@ Examples:
     p_dl.add_argument("--dataset", choices=["ml-latest-small", "ml-32m", "ml-25m", "ml-100k"], default="ml-latest-small", help="Dataset name")
     p_dl.add_argument("--output", default="./data", help="Output directory")
     p_dl.set_defaults(func=command_download_data)
-
-    # Command: app
-    p_app = subparsers.add_parser("app", help="Launch Streamlit web dashboard")
-    p_app.set_defaults(func=command_app)
 
     # Command: api
     p_api = subparsers.add_parser("api", help="Start FastAPI REST service")
