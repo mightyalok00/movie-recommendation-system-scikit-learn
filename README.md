@@ -4,14 +4,26 @@
 
 [![CineMatch Streamlit Dashboard](docs/images/cinematch-streamlit-dashboard.jpg)](https://movies-recommendation-system-ai.streamlit.app/)
 
+*The screenshot is stored in the repository at `docs/images/cinematch-streamlit-dashboard.jpg` and links directly to the live application.*
+
 **🚀 [Open the Live CineMatch App](https://movies-recommendation-system-ai.streamlit.app/)**
+
+The current CineMatch interface includes:
+- 🎯 **Similar Film** — content/tag-based similarity from a selected movie.
+- 👤 **For You** — personalized hybrid/SVD recommendations.
+- ✨ **Cold Start** — genre-based onboarding without user history.
+- 🔥 **Trending & Gems** — popular titles and hidden-gem discovery.
+- 📊 **Model Insights** — rating statistics, SVD configuration, and architecture details.
+- 💾 **Watchlist** — session-based saving of recommended titles.
+- 🖼️ **Optional poster enrichment** — TMDB artwork when `TMDB_API_KEY` is configured.
+- 💡 **Recommendation explanations** — score, Bayesian quality, rating support, and recommendation reason.
 
 ## Production-Grade Hybrid Recommender powered by Scikit-Learn, TruncatedSVD & Multi-Modal NLP
 
 <div align="center">
 
-[![CI - Unit Tests](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
-[![Run CI](https://img.shields.io/badge/Run%20CI-GitHub%20Actions-2088FF.svg?logo=githubactions&logoColor=white)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
+[![CI - Unit Tests](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/quality-gate.yml)
+[![Run CI](https://img.shields.io/badge/Run%20CI-GitHub%20Actions-2088FF.svg?logo=githubactions&logoColor=white)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/quality-gate.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.5.2-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Production%20REST-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -121,7 +133,7 @@ The table above documents the project's **full-scale MovieLens 32M offline evalu
 ```
 movie-recommendation-system/
 ├── .github/
-│   ├── workflows/ci.yml                       # Dataset-independent CI validation (Python 3.12)
+│   ├── workflows/quality-gate.yml              # Python 3.12 quality gate
 │   ├── ISSUE_TEMPLATE/                        # Bug report & feature request templates
 │   └── PULL_REQUEST_TEMPLATE.md               # Standardized PR template
 ├── .streamlit/config.toml                      # Streamlit theme
@@ -289,10 +301,10 @@ To deploy: [Deploy this repository to Streamlit Community Cloud](https://share.s
 
 1. Create a Streamlit Community Cloud app from this repository.
 2. Select branch `main` and entrypoint `app/streamlit_app.py`.
-3. Provide a deployment artifact at `MOVIELENS_ARTIFACT_PATH`.
-4. Start the app and confirm the three discovery tabs load successfully.
+3. If the full runtime artifact is available, configure `MOVIELENS_ARTIFACT_PATH` to point to it.
+4. Start the app and verify the Similar Film, For You, Cold Start, Trending & Gems, and Model Insights surfaces.
 
-**Artifact requirement:** `artifacts/movielens_runtime.joblib` is intentionally gitignored. A cloud deployment therefore needs the serialized artifact supplied through deployment storage or another mounted/downloadable location; the app will not silently train the full MovieLens model at startup.
+**Artifact behavior:** `artifacts/movielens_runtime.joblib` is intentionally gitignored. When the full artifact is supplied, Streamlit loads it directly. When it is unavailable, the application falls back to a lightweight deterministic demo runtime so the public UI remains usable. The fallback is a demo environment and does not represent the full 32M training run.
 
 ### Local demo
 
@@ -415,6 +427,21 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 
 ### 🔁 Reproducibility & CI
+
+The repository uses a single GitHub Actions workflow: `.github/workflows/quality-gate.yml` (**Quality Gate**).
+
+It runs on pushes and pull requests for `main`/`master`, plus manual `workflow_dispatch`, and validates:
+- canonical Q1–Q105 coverage
+- critical Ruff checks
+- Python compilation
+- unit, API, and Streamlit tests with coverage
+- CLI startup and profiling CLI availability
+- a MovieLens latest-small benchmark smoke test capped at 5,000 ratings
+- Docker image buildability
+
+The CI smoke benchmark is intentionally separate from the documented full MovieLens 32M offline benchmark.
+
+
 
 Canonical benchmark settings are defined in `config/experiment.py`: seed 42, a 20% temporal hold-out, relevance threshold 3.5, 32 SVD components, top-K values 5/10/20, and 100 sampled evaluation users. The committed benchmark CSV is an offline snapshot, not a fresh full-32M CI result.
 
