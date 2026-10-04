@@ -298,14 +298,25 @@ with similar_tab:
         if not candidate_ids:
             st.warning("No matching titles found. Try a shorter search.")
     else:
-        candidate_ids = [movie_id for movie_id, _ in pop_model.ranked_movies[:250]]
+        # Popularity is trained from ratings and can contain movie IDs that are
+        # absent from the metadata catalog. Only expose IDs that have a title
+        # in the catalog, because the selectbox formatter and content model
+        # both depend on movie metadata.
+        catalog_ids = set(runtime["movie_lookup"])
+        candidate_ids = [
+            int(movie_id)
+            for movie_id, _ in pop_model.ranked_movies
+            if int(movie_id) in catalog_ids
+        ][:250]
         st.caption("Popular catalog titles are shown until you search.")
 
     if candidate_ids:
         seed_id = st.selectbox(
             "Choose a starting film",
             options=candidate_ids,
-            format_func=lambda movie_id: runtime["movie_lookup"][movie_id]["title"],
+            format_func=lambda movie_id: runtime["movie_lookup"].get(
+                int(movie_id), {"title": f"Movie {movie_id}"}
+            )["title"],
             index=None,
             placeholder="Select a movie",
             key="seed_movie",
