@@ -11,7 +11,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml) • [Live Demo](#-live-demo) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
+[Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/quality-gate.yml) • [Live Demo](https://movies-recommendation-system-ai.streamlit.app/) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
 
 <br/>
 
@@ -276,7 +276,7 @@ The generated HTML reports are local analysis artifacts and are not required for
 
 ### Streamlit
 
-The repository is **deployment-ready**, but no public Streamlit URL is currently verified in this repository. The app entrypoint is `app/streamlit_app.py`, the root `requirements.txt` declares its dependencies, and `.streamlit/config.toml` provides the UI configuration. Streamlit Community Cloud supports this repository layout.
+The public Streamlit application is live at **[CineMatch Movie Recommendation System](https://movies-recommendation-system-ai.streamlit.app/)**. The app entrypoint is `app/streamlit_app.py`, the root `requirements.txt` declares its dependencies, and `.streamlit/config.toml` provides the UI configuration.
 
 To deploy: [Deploy this repository to Streamlit Community Cloud](https://share.streamlit.io/deploy?repo=mightyalok00/movie-recommendation-system-scikit-learn&branch=main&appFile=app/streamlit_app.py)
 
