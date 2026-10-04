@@ -118,7 +118,10 @@ class StreamlitAppTests(unittest.TestCase):
 
         app = AppTest.from_file(PROJECT_ROOT / "app" / "streamlit_app.py", default_timeout=30).run()
         self.assertFalse(app.exception)
-        self.assertTrue(any("Hosted demo mode" in info.value for info in app.info))
+        self.assertEqual(len(app.metric), 3)
+        self.assertEqual(app.metric[0].value, "5,000")
+        self.assertEqual(app.metric[1].value, "99")
+        self.assertFalse(any("Hosted demo mode" in info.value for info in app.info))
 
 
 if __name__ == "__main__":
