@@ -106,7 +106,7 @@ def apply_filters(candidates, selected_genres, year_range, min_quality, limit, r
             break
     return results
 
-def render_movie_cards(items, score_label, show_posters=False):
+def render_movie_cards(items, score_label, show_posters=False, key_prefix="results"):
     if not items:
         st.info("No titles matched these controls. Expand the filters and try again.")
         return
@@ -125,7 +125,7 @@ def render_movie_cards(items, score_label, show_posters=False):
             with cols[offset]:
                 tags = "".join(f"<span class='tag'>{html.escape(g)}</span>" for g in movie["genres"]) or "<span class='tag'>General</span>"
                 st.markdown(f"<div class='movie-title'>#{rank:02d} {html.escape(movie['title'])}{' · '+str(movie['year']) if movie['year'] else ''}</div><div>{tags}</div><div class='muted'>⭐ {movie['mean']:.2f}/5 · Bayesian {movie['quality']:.2f} · {movie['votes']:,} ratings</div><div class='reason'>💡 {html.escape(movie['reason'] or 'Ranked by the selected recommendation strategy.')}</div>", unsafe_allow_html=True)
-                with st.expander("Why this movie?"):
+                with st.expander("Why this movie?", key=f"why-{key_prefix}-{movie['movie_id']}"):
                     st.write(movie["reason"] or "Selected from the active candidate set.")
                     a,b,c=st.columns(3)
                     a.metric("Recommendation score", f"{movie['score']:.3f}")
@@ -134,7 +134,7 @@ def render_movie_cards(items, score_label, show_posters=False):
             with cols[offset+1]:
                 st.markdown(f"<div class='score'>{movie['score']:.2f}<br><span class='muted'>{score_label}</span></div>", unsafe_allow_html=True)
             with cols[offset+2]:
-                if st.button("Save", key=f"save-{movie['movie_id']}", use_container_width=True):
+                if st.button("Save", key=f"save-{key_prefix}-{movie['movie_id']}", use_container_width=True):
                     st.session_state.setdefault("watchlist", [])
                     if movie["movie_id"] not in st.session_state["watchlist"]:
                         st.session_state["watchlist"].append(movie["movie_id"])
@@ -190,7 +190,7 @@ with similar_tab:
         if seed is not None and st.button("Find Similar Films",type="primary",use_container_width=True):
             raw=content_model.recommend(item_id=int(seed),top_k=max(top_k*8,80))
             reason=f"Content similarity to {movie_meta(seed).get('title','your seed film')}, emphasizing shared genre and tag signals."
-            render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Similarity",True)
+            render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Similarity",True,"similar")
 
 with personal_tab:
     st.subheader("Personalized For You")
@@ -205,7 +205,7 @@ with personal_tab:
             raw=hybrid_model.recommend(user_id=uid,top_k=max(top_k*8,80),exclude_seen=True)
             reason=f"Hybrid ranking from {len(history):,} rated films; collaborative taste signals are blended with content and popularity."
             st.caption(f"Profile has **{len(history):,}** rated films.")
-            render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Match",True)
+            render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Match",True,"personal")
 
 with cold_tab:
     st.subheader("Cold-Start Onboarding")
@@ -214,7 +214,7 @@ with cold_tab:
     if favorite and st.button("Build My Starter List",type="primary",use_container_width=True):
         raw=genre_prior.recommend(preferred_genres=favorite,top_k=max(top_k*8,80))
         reason=f"Cold-start ranking for {', '.join(favorite)} using Bayesian popularity and genre affinity."
-        render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Quality",True)
+        render_movie_cards(apply_filters(raw,selected_genres,year_range,min_quality,top_k,reason),"Quality",True,"cold")
     else:
         st.info("Choose one or more genres to start your personalized onboarding.")
 
@@ -229,10 +229,10 @@ with discover_tab:
     a,b=st.columns(2)
     with a:
         st.markdown("### 🔥 Trending / Popular")
-        render_movie_cards(trend_results,"Quality")
+        render_movie_cards(trend_results,"Quality",False,"trending")
     with b:
         st.markdown("### 💎 Hidden Gems")
-        render_movie_cards(gem_results,"Quality")
+        render_movie_cards(gem_results,"Quality",False,"gems")
 
 with insights_tab:
     st.subheader("Model & Data Insights")
