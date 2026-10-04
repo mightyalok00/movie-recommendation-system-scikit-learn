@@ -2,7 +2,7 @@
 MovieLens 32M Unified Command-Line Interface (CLI)
 ==================================================
 Provides convenient CLI commands to execute question pipelines, run tests,
-launch the Streamlit dashboard, or start the FastAPI service.
+start the FastAPI service.
 
 Usage:
     python main.py run-all                # Run all 11 solution sections and generate reports
