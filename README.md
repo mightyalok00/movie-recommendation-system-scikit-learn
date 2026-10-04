@@ -103,6 +103,7 @@ movie-recommendation-system/
 │   ├── workflows/ci.yml                       # Dataset-independent CI validation (Python 3.12)
 │   ├── ISSUE_TEMPLATE/                        # Bug report & feature request templates
 │   └── PULL_REQUEST_TEMPLATE.md               # Standardized PR template
+├── .streamlit/config.toml                      # Streamlit theme
 ├── .env.example                               # Environment variable template
 ├── .gitignore                                 # Git rules ignoring 1GB+ raw datasets
 ├── Dockerfile                                 # FastAPI production container
@@ -112,6 +113,7 @@ movie-recommendation-system/
 ├── README.md                                  # Documentation & benchmark report
 ├── requirements.txt                           # Production dependencies
 ├── requirements-dev.txt                       # CI quality / coverage / profiling tooling
+├── app.py                                      # Streamlit movie-discovery interface
 ├── main.py                                    # Unified Command-Line Interface (CLI)
 ├── run_all.py                                 # Master runner across all 11 sections
 │
@@ -161,7 +163,8 @@ movie-recommendation-system/
 │   ├── test_evaluation.py                     # Ranking metrics (NDCG, MAP, Recall, Precision)
 │   ├── test_pipeline.py                       # Scikit-learn BaseEstimator lifecycle tests
 │   ├── test_runtime.py                        # Artifact runtime contract tests
-│   └── test_api.py                            # FastAPI RESTful endpoint integration tests
+│   ├── test_api.py                            # FastAPI RESTful endpoint integration tests
+│   └── test_streamlit_app.py                  # Headless Streamlit UI interaction tests
 │
 ├── reports/                                   # Solution Dossiers & Metrics
 │   ├── MOVIELENS_32M_105_QUESTION_SOLUTIONS.md        # Comprehensive 105-question mathematical dossier
@@ -282,9 +285,18 @@ for movie_id, score in recommendations:
 
 ## ⚡ Runtime & Startup Performance
 
-The serving layer is artifact-first. Training, TF-IDF construction, sparse-matrix creation, and SVD fitting happen offline through `build-artifacts`; they are never part of normal application startup. This keeps the future Streamlit UI from paying the model-training cost during a cold start.
+The serving layer is artifact-first. Training, TF-IDF construction, sparse-matrix creation, and SVD fitting happen offline through `build-artifacts`; they are never part of normal application startup. The Streamlit UI and API both load this pre-built runtime.
 
-A future Streamlit UI should load the serialized runtime bundle with `st.cache_resource`, which is designed for global resources such as ML models. Streamlit also recommends caching expensive computations because the script reruns on user interaction.
+The Streamlit interface in [`app.py`](app.py) loads the same serialized runtime bundle as the API, cached with `st.cache_resource`. It does not train models on startup. To run it locally:
+
+```bash
+pip install -r requirements.txt
+python main.py download-data --dataset ml-latest-small
+python main.py build-artifacts --max-ratings 100000
+python -m streamlit run app.py
+```
+
+Use `--max-ratings` only for a small local/demo artifact; omit it to build from the full dataset. Runtime artifacts are intentionally excluded from Git. For deployment, build the artifact separately, make it available to the app environment, and set `MOVIELENS_ARTIFACT_PATH` to its location. The app displays setup instructions if no artifact is available.
 
 ## 🌐 FastAPI Production Microservice
 
