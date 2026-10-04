@@ -87,7 +87,7 @@ class StreamlitAppTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_discovery_personalization_and_genre_flows_render(self):
-        app = AppTest.from_file(PROJECT_ROOT / "app.py", default_timeout=30).run()
+        app = AppTest.from_file(PROJECT_ROOT / "app" / "streamlit_app.py", default_timeout=30).run()
         self.assertFalse(app.exception)
         self.assertEqual(len(app.metric), 3)
 
