@@ -16,6 +16,7 @@ import joblib
 import pandas as pd
 
 from config.settings import ARTIFACTS_DIR
+from data.loader import MovieLensDataLoader
 from src.cold_start import GenrePriorRecommender
 from src.pipeline import MovieLensRecommendationPipeline
 
@@ -50,6 +51,35 @@ def load_runtime_artifact(path: str | Path | None = None) -> Dict[str, Any]:
         )
 
     return bundle
+
+def build_cloud_demo_runtime() -> Dict[str, Any]:
+    """Build a tiny deterministic fallback runtime when no artifact is bundled.
+
+    This path exists for hosted demos such as Streamlit Community Cloud. It
+    never attempts to train the full MovieLens 32M dataset. Production/API
+    deployments remain artifact-first.
+    """
+    loader = MovieLensDataLoader()
+    movies = loader.load_movies()
+    ratings = loader.load_ratings(max_rows=5_000)
+    tags = loader.load_tags()
+
+    pipeline = MovieLensRecommendationPipeline(
+        n_svd_components=8,
+        min_popularity_m=3,
+        random_state=42,
+    )
+    pipeline.fit(ratings_df=ratings, movies_df=movies, tags_df=tags)
+
+    return prepare_runtime(
+        {
+            "version": RUNTIME_ARTIFACT_VERSION,
+            "pipeline": pipeline,
+            "movies_df": movies,
+            "baseline_ratings": ratings,
+            "cloud_demo": True,
+        }
+    )
 
 
 def prepare_runtime(bundle: Dict[str, Any]) -> Dict[str, Any]:
