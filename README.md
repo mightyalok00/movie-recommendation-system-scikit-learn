@@ -105,7 +105,7 @@ movie-recommendation-system/
 │   └── PULL_REQUEST_TEMPLATE.md               # Standardized PR template
 ├── .env.example                               # Environment variable template
 ├── .gitignore                                 # Git rules ignoring 1GB+ raw datasets
-├── Dockerfile                                 # Multi-stage production container
+├── Dockerfile                                 # FastAPI production container
 ├── docker-compose.yml                         # FastAPI orchestration
 ├── Makefile                                   # Command shortcuts
 ├── LICENSE                                    # MIT License
@@ -129,7 +129,8 @@ movie-recommendation-system/
 │   ├── cold_start.py                          # Bayesian popularity & genre onboarding
 │   ├── hybrid.py                              # Weighted hybrid with MMR diversity
 │   ├── evaluation.py                          # Temporal split & Ranking metrics (NDCG, MAP)
-│   └── pipeline.py                            # Scikit-learn Pipeline wrapper
+│   ├── pipeline.py                            # Scikit-learn Pipeline wrapper
+│   └── runtime.py                              # Artifact-first runtime loader
 │
 ├── solutions/                                 # 11 Dedicated modules solving all 105 questions
 │   ├── 01_dataset_understanding_validation.py # Section 1: Q1 - Q10
@@ -151,6 +152,7 @@ movie-recommendation-system/
 ├── scripts/                                   # Automation & dataset utilities
 │   ├── download_dataset.py                    # Official MovieLens dataset downloader
 │   ├── profile_dataset.py                     # YData Profiling report generator
+│   ├── build_artifacts.py                     # Offline model artifact builder
 │   └── reproduce_benchmarks.py                # 1-command benchmark reproduction
 │
 ├── tests/                                     # Automated Unit & Integration Tests
@@ -158,14 +160,15 @@ movie-recommendation-system/
 │   ├── test_models.py                         # SVD, Genre, TF-IDF & Hybrid model tests
 │   ├── test_evaluation.py                     # Ranking metrics (NDCG, MAP, Recall, Precision)
 │   ├── test_pipeline.py                       # Scikit-learn BaseEstimator lifecycle tests
+│   ├── test_runtime.py                        # Artifact runtime contract tests
 │   └── test_api.py                            # FastAPI RESTful endpoint integration tests
 │
 ├── reports/                                   # Solution Dossiers & Metrics
 │   ├── MOVIELENS_32M_105_QUESTION_SOLUTIONS.md        # Comprehensive 105-question mathematical dossier
 │   └── benchmark_results.csv                  # Offline benchmark metrics
 │
-└── artifacts/                                 # Serialized Pipeline Binaries
-    └── movielens_pipeline.joblib
+└── artifacts/                                 # Local/deployment model artifacts (gitignored)
+    └── movielens_runtime.joblib
 ```
 
 ---
@@ -195,11 +198,34 @@ python main.py benchmark --max-ratings 50000
 ```
 *Evaluates Popularity, SVD, and Weighted Hybrid models under temporal hold-out split, updating `reports/benchmark_results.csv`.*
 
-### 5. Start FastAPI Production REST API
+### 5. Build the deployment-ready runtime artifact
+
+Model training is deliberately separated from application startup. Build the serialized runtime offline from your MovieLens dataset:
+
+```bash
+python main.py build-artifacts
+```
+
+For a quick development artifact, cap the training rows:
+
+```bash
+python main.py build-artifacts --max-ratings 500000
+```
+
+The generated `artifacts/movielens_runtime.joblib` is ignored by Git because a full-scale model artifact can be large. Keep the artifact in deployment storage or mount it into the container.
+
+### 6. Start FastAPI Production REST API
 ```bash
 python main.py api --port 8000
 ```
 *Interactive Swagger docs at: `http://localhost:8000/docs`*
+
+The API does not train models during process startup. It loads the pre-built artifact on the first model request. If no artifact exists, model endpoints return HTTP 503 with an actionable message. For local development only, set `MOVIELENS_RUNTIME_MODE=train` to enable the bounded training fallback.
+
+### 7. Run with Docker Compose
+```bash
+docker-compose up -d
+```
 
 ### 6. Run with Docker Compose
 ```bash
@@ -253,6 +279,12 @@ for movie_id, score in recommendations:
 ```
 
 ---
+
+## ⚡ Runtime & Startup Performance
+
+The serving layer is artifact-first. Training, TF-IDF construction, sparse-matrix creation, and SVD fitting happen offline through `build-artifacts`; they are never part of normal application startup. This keeps the future Streamlit UI from paying the model-training cost during a cold start.
+
+A future Streamlit UI should load the serialized runtime bundle with `st.cache_resource`, which is designed for global resources such as ML models. Streamlit also recommends caching expensive computations because the script reruns on user interaction.
 
 ## 🌐 FastAPI Production Microservice
 
