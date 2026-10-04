@@ -18,16 +18,37 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.badge(
-    "MovieLens · intelligent discovery",
-    color="orange",
-    icon=":material/movie_filter:",
+st.markdown(
+    """
+    <style>
+    .block-container {max-width: 1480px; padding-top: 2.2rem; padding-bottom: 3rem;}
+    .hero {padding: 2rem 2.2rem 1.8rem; border: 1px solid rgba(249,115,91,.22); border-radius: 24px; background: radial-gradient(circle at 85% 10%, rgba(249,115,91,.16), transparent 34%), linear-gradient(135deg, rgba(255,255,255,.045), rgba(255,255,255,.015)); margin-bottom: 1.25rem;}
+    .eyebrow {color:#f9735b; font-size:.78rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase;}
+    .hero h1 {font-size:clamp(2.2rem,5vw,4.5rem); line-height:.98; margin:.35rem 0 .8rem; letter-spacing:-.055em;}
+    .hero p {max-width:760px; color:#aeb4c0; font-size:1.05rem; line-height:1.65; margin:0;}
+    div[data-testid="stMetric"] {background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1rem 1.1rem;}
+    div[data-testid="stMetricLabel"] {color:#8f96a3;}
+    .movie-title {font-size:1.08rem; font-weight:750; letter-spacing:-.01em;}
+    .movie-meta {color:#8f96a3; font-size:.86rem; margin-top:.15rem;}
+    .score-pill {text-align:center; padding:.55rem .7rem; border:1px solid rgba(249,115,91,.22); border-radius:14px; background:rgba(249,115,91,.07);}
+    .score-pill .value {font-size:1.18rem; font-weight:800; color:#ff9a86;}
+    .score-pill .label {font-size:.68rem; color:#8f96a3; text-transform:uppercase; letter-spacing:.08em;}
+    button[kind="primary"] {min-height:2.8rem; border-radius:12px; font-weight:750;}
+    [data-testid="stSidebar"] {border-right:1px solid rgba(255,255,255,.08);}
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
-st.title("Find your next favorite film.")
-st.write(
-    "Explore films through content similarity, personalized collaborative "
-    "recommendations, and genre-led discovery—all powered by the project's "
-    "Scikit-learn recommendation runtime."
+st.markdown(
+    """
+    <div class="hero">
+      <div class="eyebrow">CineMatch · MovieLens Intelligence</div>
+      <h1>Find your next<br>favorite film.</h1>
+      <p>Discover smarter with content similarity, collaborative personalization,
+      and genre-led recommendations — wrapped in one clean movie discovery experience.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 
@@ -136,16 +157,16 @@ def render_recommendations(
         return
 
     for rank, movie in enumerate(recommendations, start=1):
-        with st.container(border=True):
-            details, score = st.columns([5, 1], vertical_alignment="center")
+        with st.container(border=True, key=f"movie-card-{movie['movie_id']}"):
+            details, score = st.columns([6.4, 1.2], vertical_alignment="center", gap="medium")
             with details:
                 year = f" · {movie['year']}" if movie["year"] else ""
-                st.subheader(f"{rank:02d} · {movie['title']}{year}")
-                st.caption("  ·  ".join(movie["genres"]) or "Genres not listed")
-            with score:
-                st.metric(score_label, f"{movie['score']:.2f}")
+                st.markdown(f'<div class="movie-title">{rank:02d} · {movie["title"]}{year}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="movie-meta">{" · ".join(movie["genres"]) or "Genres not listed"}</div>', unsafe_allow_html=True)
                 if movie["quality"] is not None:
                     st.caption(f"Quality estimate · {movie['quality']:.2f} / 5")
+            with score:
+                st.markdown(f'<div class="score-pill"><div class="value">{movie["score"]:.2f}</div><div class="label">{score_label}</div></div>', unsafe_allow_html=True)
 
 
 try:
@@ -172,34 +193,46 @@ valid_years = movies_df["year"].dropna()
 year_min = int(valid_years.min()) if not valid_years.empty else 1900
 year_max = int(valid_years.max()) if not valid_years.empty else year_min
 
-st.sidebar.markdown("### Your discovery settings")
-selected_genres = st.sidebar.multiselect(
-    "Include any of these genres",
-    options=all_genres,
-    help="Leave empty to include every genre.",
-)
-if year_min < year_max:
-    year_range = st.sidebar.slider(
-        "Release years",
-        min_value=year_min,
-        max_value=year_max,
-        value=(year_min, year_max),
-    )
-else:
-    year_range = (year_min, year_max)
-min_quality = st.sidebar.slider(
-    "Minimum quality estimate",
-    min_value=0.0,
-    max_value=5.0,
-    value=0.0,
-    step=0.1,
-)
-top_k = st.sidebar.slider("Titles per view", min_value=5, max_value=20, value=10)
-st.sidebar.divider()
-st.sidebar.caption(
-    "Recommendations run locally from a pre-built model bundle. "
-    "Your filters are applied in this session."
-)
+st.markdown('<div style="font-size:.78rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#8f96a3;margin-bottom:.45rem;">Discovery filters</div>', unsafe_allow_html=True)
+with st.container(border=True, key="filter_panel"):
+    filter_a, filter_b, filter_c, filter_d = st.columns([2.2, 1.7, 1.5, 1.2], gap="medium")
+    with filter_a:
+        selected_genres = st.multiselect(
+            "Genres",
+            options=all_genres,
+            placeholder="All genres",
+            help="Select one or more genres. A title matching any selected genre is included.",
+            width="stretch",
+        )
+    with filter_b:
+        if year_min < year_max:
+            year_range = st.slider(
+                "Release years",
+                min_value=year_min,
+                max_value=year_max,
+                value=(year_min, year_max),
+                width="stretch",
+            )
+        else:
+            year_range = (year_min, year_max)
+    with filter_c:
+        min_quality = st.slider(
+            "Min. quality",
+            min_value=0.0,
+            max_value=5.0,
+            value=0.0,
+            step=0.1,
+            width="stretch",
+        )
+    with filter_d:
+        top_k = st.slider(
+            "Results",
+            min_value=5,
+            max_value=20,
+            value=10,
+            step=1,
+            width="stretch",
+        )
 
 metric_catalog, metric_users, metric_components = st.columns(3)
 metric_catalog.metric("Movies in catalog", f"{len(movies_df):,}")
