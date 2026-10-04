@@ -89,7 +89,10 @@ class StreamlitAppTests(unittest.TestCase):
     def test_discovery_personalization_and_genre_flows_render(self):
         app = AppTest.from_file(PROJECT_ROOT / "app" / "streamlit_app.py", default_timeout=30).run()
         self.assertFalse(app.exception)
-        self.assertEqual(len(app.metric), 3)
+        metrics = {metric.label: metric.value for metric in app.metric}
+        self.assertEqual(metrics["🎬 Movies in Catalog"], "8")
+        self.assertEqual(metrics["👤 User Profiles"], "6")
+        self.assertEqual(metrics["⚡ Intelligence Stack"], "Hybrid + SVD")
 
         app.selectbox(key="seed_movie").select(1).run()
         self.assertFalse(app.exception)
@@ -118,9 +121,10 @@ class StreamlitAppTests(unittest.TestCase):
 
         app = AppTest.from_file(PROJECT_ROOT / "app" / "streamlit_app.py", default_timeout=30).run()
         self.assertFalse(app.exception)
-        self.assertEqual(len(app.metric), 3)
-        self.assertEqual(app.metric[0].value, "5,000")
-        self.assertEqual(app.metric[1].value, "99")
+        metrics = {metric.label: metric.value for metric in app.metric}
+        self.assertEqual(metrics["🎬 Movies in Catalog"], "5,000")
+        self.assertEqual(metrics["👤 User Profiles"], "99")
+        self.assertEqual(metrics["⚡ Intelligence Stack"], "Hybrid + SVD")
         self.assertFalse(any("Hosted demo mode" in info.value for info in app.info))
 
 
