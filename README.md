@@ -9,7 +9,6 @@
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.5.2-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Production%20REST-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml) • [Live Demo](#-live-demo) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
@@ -56,6 +55,27 @@ flowchart LR
 ```
 
 **Serving principle:** model fitting is an offline build step. Both FastAPI and Streamlit consume the same serialized runtime artifact; neither trains the full MovieLens model during normal startup.
+
+### ☁️ Streamlit Community Cloud
+
+Deploy the UI with:
+
+- **Branch:** `main`
+- **Main file:** `app/streamlit_app.py`
+- **Python:** **3.12**
+- **Dependencies:** root `requirements.txt`
+
+The production architecture remains **artifact-first**. The full `artifacts/movielens_runtime.joblib` file is intentionally excluded from Git because it is a large binary. If that artifact is unavailable in the hosted environment, the Streamlit app automatically switches to a **small deterministic demo runtime** built from the repository's built-in MovieLens fallback catalog. This keeps the public demo functional without pretending that the hosted sample represents the full 32M training run.
+
+For the full-scale application, build and provide the runtime artifact locally:
+
+```bash
+python main.py build-artifacts
+python -m streamlit run app/streamlit_app.py
+```
+
+This separation keeps cloud startup lightweight while preserving the complete 32M training pipeline for reproducible local/production builds.
+
 
 ---
 
