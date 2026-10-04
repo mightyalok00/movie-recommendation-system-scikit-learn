@@ -5,15 +5,14 @@
 
 [![CI - Unit Tests](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
 [![Run CI](https://img.shields.io/badge/Run%20CI-GitHub%20Actions-2088FF.svg?logo=githubactions&logoColor=white)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml)
-[![YData Profiling](https://img.shields.io/badge/YData%20Profiling-Run%20Workflow-6B46C1.svg)](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ydata-profile.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
-[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.5.2-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Production%20REST-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
+[Run CI](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ci.yml) • [Live Demo](#-live-demo) • [Architecture](#-system-architecture) • [Benchmarks](#-offline-benchmark-evaluation) • [Quickstart](#-quick-start) • [Scikit-Learn Pipeline](#-scikit-learn-estimator-api) • [REST API](#-fastapi-production-microservice) • [105 Questions Solved](#-complete-105-question-solutions)
 
 <br/>
 
@@ -37,31 +36,26 @@
 ## 🏛️ System Architecture
 
 ```mermaid
-flowchart TD
-    subgraph Data Layer
-        A[MovieLens 32M Raw CSVs] --> B[MovieLensDataLoader]
-        B --> C[CSR Sparse User-Item Matrix]
-        B --> D[Multi-Modal Content Metadata]
-    end
-
-    subgraph Core ML Recommender Models
-        C --> E[TruncatedSVD Collaborative Filtering]
-        D --> F[Tag TF-IDF & Genre NearestNeighbors]
-        C --> G[Bayesian Smoothed Popularity Prior]
-    end
-
-    subgraph Hybrid Orchestration & Re-Ranking
-        E --> H[Weighted Score Fusion Layer]
-        F --> H
-        G --> H
-        H --> I[Maximal Marginal Relevance - MMR Diversity Re-ranker]
-    end
-
-    subgraph Serving & Interfaces
-        I --> J[FastAPI RESTful API :8000]
-        I --> K[Scikit-Learn Reusable Pipeline]
-    end
+flowchart LR
+    A[MovieLens 32M CSVs] --> B[MovieLensDataLoader]
+    B --> C[Content Features\nTF-IDF + Genres + Tags]
+    B --> D[CSR User-Item Matrix]
+    D --> E[TruncatedSVD]
+    D --> F[Popularity Prior]
+    C --> G[Content Recommender]
+    E --> H[Hybrid Fusion + MMR]
+    F --> H
+    G --> H
+    H --> I[MovieLensRecommendationPipeline]
+    I --> J[Offline Build\nmain.py build-artifacts]
+    J --> K[(movielens_runtime.joblib)]
+    K --> L[FastAPI :8000]
+    K --> M[Streamlit app.py]
+    L --> N[Swagger /docs]
+    M --> O[Discovery UI]
 ```
+
+**Serving principle:** model fitting is an offline build step. Both FastAPI and Streamlit consume the same serialized runtime artifact; neither trains the full MovieLens model during normal startup.
 
 ---
 
@@ -227,22 +221,15 @@ The API does not train models during process startup. It loads the pre-built art
 
 ### 7. Run with Docker Compose
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-### 6. Run with Docker Compose
-```bash
-docker-compose up -d
-```
+### 8. Generate YData Profiling Reports locally
 
-### 7. Generate YData Profiling Reports
-
-**GitHub Actions:** [▶ Run YData Profiling](https://github.com/mightyalok00/movie-recommendation-system-scikit-learn/actions/workflows/ydata-profile.yml) — choose the sample sizes and download the generated HTML reports as a workflow artifact.
-
-YData Profiling is included as a development dependency for dataset-quality and EDA inspection.
+YData Profiling remains a **local development/EDA tool**; it is not a separate GitHub Actions workflow. The CI pipeline only validates that the profiling CLI is callable.
 
 ```bash
-pip install -r requirements-dev.txt
+python -m pip install -r requirements-dev.txt
 python scripts/profile_dataset.py --data-dir E:\\ml-32m
 ```
 
@@ -250,6 +237,69 @@ The script writes HTML reports to `reports/ydata/`. To keep memory usage practic
 
 The generated HTML reports are local analysis artifacts and are not required for CI or application startup.
 
+
+---
+
+## 🎯 Key Results for Recruiters
+
+- **32M-scale recommender:** designed for 32,000,204 MovieLens ratings, 87,585 movies, 200,948 users, and 2,000,072 tags.
+- **Three-signal recommendation stack:** content similarity + TruncatedSVD collaborative filtering + Bayesian-smoothed popularity.
+- **Hybrid ranking:** weighted fusion followed by MMR re-ranking to improve recommendation diversity.
+- **Offline evaluation:** the documented full-scale benchmark reports **0.0940 Precision@5**, **0.0564 Recall@5**, **0.1072 NDCG@10**, and **0.44% catalog coverage@10** for the proposed hybrid model.
+- **Production architecture:** training is separated from serving through a serialized `joblib` runtime artifact consumed by both FastAPI and Streamlit.
+- **Engineering quality:** Python 3.12 CI covers compilation, static checks, tests, CLI validation, benchmark smoke testing, and Docker build verification.
+
+---
+
+## 🌐 Live Demo
+
+### Streamlit
+
+The repository is **deployment-ready**, but no public Streamlit URL is currently verified in this repository. The app entrypoint is `app.py`, the root `requirements.txt` declares its dependencies, and `.streamlit/config.toml` provides the UI configuration. Streamlit Community Cloud supports this repository layout.
+
+To deploy:
+
+1. Create a Streamlit Community Cloud app from this repository.
+2. Select branch `main` and entrypoint `app.py`.
+3. Provide a deployment artifact at `MOVIELENS_ARTIFACT_PATH`.
+4. Start the app and confirm the three discovery tabs load successfully.
+
+**Artifact requirement:** `artifacts/movielens_runtime.joblib` is intentionally gitignored. A cloud deployment therefore needs the serialized artifact supplied through deployment storage or another mounted/downloadable location; the app will not silently train the full MovieLens model at startup.
+
+### Local demo
+
+```bash
+python main.py download-data --dataset ml-latest-small --output data/
+python main.py build-artifacts --max-ratings 100000
+python -m streamlit run app.py
+```
+
+Open `http://localhost:8501` and test:
+
+- **Explore similar films** — content/tag similarity.
+- **For a returning viewer** — hybrid/SVD personalization.
+- **Start with a genre** — cold-start genre-prior recommendations.
+
+### FastAPI demo
+
+```bash
+python main.py api --port 8000
+```
+
+Then open `http://localhost:8000/docs`. The API and Streamlit UI both load the same artifact format through `src/runtime.py`.
+
+---
+
+## 🖼️ Demo & Verification
+
+The project includes automated headless Streamlit tests and FastAPI artifact-backed endpoint tests. This avoids claiming a cloud demo is live when the deployment artifact is intentionally external to Git.
+
+| Surface | Verification |
+|---|---|
+| Streamlit UI | `tests/test_streamlit_app.py` exercises similarity, personalization, genre discovery, and missing-artifact behavior. |
+| FastAPI | `tests/test_api_artifact_runtime.py` loads a test runtime artifact and exercises health, readiness, search, recommendation, cold-start, and drift endpoints. |
+| Artifact contract | `tests/test_runtime.py` validates loading and preparation of the serialized runtime. |
+| CI | GitHub Actions runs the test suite, CLI checks, benchmark smoke test, and Docker build. |
 
 ---
 
