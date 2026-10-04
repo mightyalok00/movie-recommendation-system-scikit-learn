@@ -73,7 +73,7 @@ class MovieLensRecommendationPipeline(BaseEstimator):
         self.content_model.fit(content_meta)
 
         # 2. Collaborative SVD Model
-        from data_loader import MovieLensDataLoader
+        from data.loader import MovieLensDataLoader
         loader = MovieLensDataLoader()
         matrix, u2i, _, m2i, _ = loader.get_user_movie_sparse_matrix(ratings_df)
         
